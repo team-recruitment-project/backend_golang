@@ -8,7 +8,7 @@ import (
 )
 
 type TeamRepository interface {
-	CreateTeam(createTeam models.CreateTeam) error
+	CreateTeam(ctx context.Context, createTeam models.CreateTeam) error
 }
 
 type teamRepository struct {
@@ -16,16 +16,18 @@ type teamRepository struct {
 }
 
 func NewTeamRepository(client *ent.Client) TeamRepository {
-	return &teamRepository{client: client}
+	return &teamRepository{
+		client: client,
+	}
 }
 
-func (t *teamRepository) CreateTeam(createTeam models.CreateTeam) error {
+func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) error {
 	positions := []*ent.Position{}
 	for _, vacancy := range createTeam.Vacancies {
 		savedPosition, err := t.client.Position.Create().
 			SetRole(string(vacancy.Role)).
 			SetVacancy(vacancy.Vacancy).
-			Save(context.Background())
+			Save(ctx)
 		if err != nil {
 			log.Println("error", err)
 			return err
@@ -39,6 +41,6 @@ func (t *teamRepository) CreateTeam(createTeam models.CreateTeam) error {
 		SetDescription(createTeam.Description).
 		SetHeadcount(createTeam.Headcount).
 		AddPositions(positions...).
-		Save(context.Background())
+		Save(ctx)
 	return nil
 }

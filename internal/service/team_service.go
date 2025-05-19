@@ -3,10 +3,11 @@ package service
 import (
 	"backend_golang/internal/repository"
 	"backend_golang/internal/service/models"
+	"context"
 )
 
 type TeamService interface {
-	Create(createTeam models.CreateTeam) error
+	Create(ctx context.Context, createTeam models.CreateTeam) error
 }
 
 type teamService struct {
@@ -17,9 +18,9 @@ func NewTeamService(teamRepository repository.TeamRepository) TeamService {
 	return &teamService{teamRepository: teamRepository}
 }
 
-func (t *teamService) Create(createTeam models.CreateTeam) error {
+func (t *teamService) Create(ctx context.Context, createTeam models.CreateTeam) error {
 
-	err := t.teamRepository.CreateTeam(createTeam)
+	err := t.teamRepository.CreateTeam(ctx, createTeam)
 	if err != nil {
 		return err
 	}

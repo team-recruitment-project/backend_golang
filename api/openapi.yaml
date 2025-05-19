@@ -1,0 +1,96 @@
+openapi: 3.0.0
+info:
+  title: チーム募集API
+  description: チーム募集のためのAPI仕様書
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: 開発環境
+
+paths:
+  /teams:
+    post:
+      summary: 新しいチームを作成
+      description: 新しいチームを作成するためのエンドポイント
+      operationId: makeTeam
+      tags:
+        - チーム
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MakeTeamRequest'
+      responses:
+        '200':
+          description: チームの作成に成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: チームが正常に作成されました
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ValidationError'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 内部サーバーエラーが発生しました
+
+components:
+  schemas:
+    MakeTeamRequest:
+      type: object
+      required:
+        - teamName
+        - description
+        - headcount
+        - vacancies
+      properties:
+        teamName:
+          type: string
+          description: チーム名
+          example: エンジニアリングチーム
+        description:
+          type: string
+          description: チームの説明
+          example: バックエンド開発を担当するチームです
+        headcount:
+          type: integer
+          description: チームの総人数
+          minimum: 1
+          example: 5
+        vacancies:
+          type: integer
+          description: 募集人数
+          minimum: 0
+          example: 2
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: バリデーションエラーが発生したフィールド
+          example: teamName
+        message:
+          type: string
+          description: エラーメッセージ
+          example: チーム名は必須です 

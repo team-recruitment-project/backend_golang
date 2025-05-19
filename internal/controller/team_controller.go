@@ -41,10 +41,14 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 		return
 	}
 
-	t.teamService.Create(smodels.CreateTeam{
-		TeamName:    req.TeamName,
-		Description: req.Description,
-		Headcount:   req.Headcount,
-		Vacancies:   req.Vacancies,
-	})
+	if err := t.teamService.Create(c,
+		smodels.CreateTeam{
+			TeamName:    req.TeamName,
+			Description: req.Description,
+			Headcount:   req.Headcount,
+			Vacancies:   req.Vacancies,
+		}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 }
