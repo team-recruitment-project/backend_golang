@@ -1,10 +1,31 @@
 package request
 
-import "backend_golang/internal/models"
+import (
+	"backend_golang/internal/models"
+	"strings"
+
+	"github.com/go-playground/validator/v10"
+)
 
 type MakeTeamRequest struct {
-	TeamName    string
-	Description string
-	headcount   int8
-	Vacancies   []models.Vacancy
+	TeamName    string           `json:"teamName" validate:"required,min=1,notblank"`
+	Description string           `json:"description" validate:"required,min=1,notblank"`
+	Headcount   int8             `json:"headcount"`
+	Vacancies   []models.Vacancy `json:"vacancies" validate:"required,min=1,dive"`
+}
+
+var validate *validator.Validate
+
+func init() {
+	validate = validator.New()
+	validate.RegisterValidation("notblank", validateNotBlank)
+}
+
+func validateNotBlank(fl validator.FieldLevel) bool {
+	value := fl.Field().String()
+	return strings.TrimSpace(value) != ""
+}
+
+func (r *MakeTeamRequest) Validate() error {
+	return validate.Struct(r)
 }
