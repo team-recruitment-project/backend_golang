@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Member is the client for interacting with the Member builders.
 	Member *MemberClient
+	// Position is the client for interacting with the Position builders.
+	Position *PositionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 
@@ -148,6 +150,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Member = NewMemberClient(tx.config)
+	tx.Position = NewPositionClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 }
 

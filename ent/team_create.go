@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"backend_golang/ent/position"
 	"backend_golang/ent/team"
 	"context"
 	"errors"
@@ -17,12 +18,6 @@ type TeamCreate struct {
 	config
 	mutation *TeamMutation
 	hooks    []Hook
-}
-
-// SetTeamID sets the "team_id" field.
-func (tc *TeamCreate) SetTeamID(i int64) *TeamCreate {
-	tc.mutation.SetTeamID(i)
-	return tc
 }
 
 // SetName sets the "name" field.
@@ -41,6 +36,21 @@ func (tc *TeamCreate) SetDescription(s string) *TeamCreate {
 func (tc *TeamCreate) SetHeadcount(i int8) *TeamCreate {
 	tc.mutation.SetHeadcount(i)
 	return tc
+}
+
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (tc *TeamCreate) AddPositionIDs(ids ...int) *TeamCreate {
+	tc.mutation.AddPositionIDs(ids...)
+	return tc
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (tc *TeamCreate) AddPositions(p ...*Position) *TeamCreate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tc.AddPositionIDs(ids...)
 }
 
 // Mutation returns the TeamMutation object of the builder.
@@ -77,9 +87,6 @@ func (tc *TeamCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (tc *TeamCreate) check() error {
-	if _, ok := tc.mutation.TeamID(); !ok {
-		return &ValidationError{Name: "team_id", err: errors.New(`ent: missing required field "Team.team_id"`)}
-	}
 	if _, ok := tc.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Team.name"`)}
 	}
@@ -115,10 +122,6 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 		_node = &Team{config: tc.config}
 		_spec = sqlgraph.NewCreateSpec(team.Table, sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt))
 	)
-	if value, ok := tc.mutation.TeamID(); ok {
-		_spec.SetField(team.FieldTeamID, field.TypeInt64, value)
-		_node.TeamID = value
-	}
 	if value, ok := tc.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 		_node.Name = value
@@ -130,6 +133,22 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Headcount(); ok {
 		_spec.SetField(team.FieldHeadcount, field.TypeInt8, value)
 		_node.Headcount = value
+	}
+	if nodes := tc.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

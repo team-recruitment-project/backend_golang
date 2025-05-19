@@ -27,73 +27,73 @@ func (mu *MemberUpdate) Where(ps ...predicate.Member) *MemberUpdate {
 	return mu
 }
 
-// SetMemberID sets the "member_id" field.
-func (mu *MemberUpdate) SetMemberID(i int64) *MemberUpdate {
-	mu.mutation.ResetMemberID()
-	mu.mutation.SetMemberID(i)
+// SetEmail sets the "email" field.
+func (mu *MemberUpdate) SetEmail(s string) *MemberUpdate {
+	mu.mutation.SetEmail(s)
 	return mu
 }
 
-// SetNillableMemberID sets the "member_id" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableMemberID(i *int64) *MemberUpdate {
-	if i != nil {
-		mu.SetMemberID(*i)
-	}
-	return mu
-}
-
-// AddMemberID adds i to the "member_id" field.
-func (mu *MemberUpdate) AddMemberID(i int64) *MemberUpdate {
-	mu.mutation.AddMemberID(i)
-	return mu
-}
-
-// SetName sets the "name" field.
-func (mu *MemberUpdate) SetName(s string) *MemberUpdate {
-	mu.mutation.SetName(s)
-	return mu
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableName(s *string) *MemberUpdate {
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableEmail(s *string) *MemberUpdate {
 	if s != nil {
-		mu.SetName(*s)
+		mu.SetEmail(*s)
 	}
 	return mu
 }
 
-// SetDescription sets the "description" field.
-func (mu *MemberUpdate) SetDescription(s string) *MemberUpdate {
-	mu.mutation.SetDescription(s)
+// SetPicture sets the "picture" field.
+func (mu *MemberUpdate) SetPicture(s string) *MemberUpdate {
+	mu.mutation.SetPicture(s)
 	return mu
 }
 
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableDescription(s *string) *MemberUpdate {
+// SetNillablePicture sets the "picture" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillablePicture(s *string) *MemberUpdate {
 	if s != nil {
-		mu.SetDescription(*s)
+		mu.SetPicture(*s)
 	}
 	return mu
 }
 
-// SetHeadacount sets the "headacount" field.
-func (mu *MemberUpdate) SetHeadacount(i int8) *MemberUpdate {
-	mu.mutation.ResetHeadacount()
-	mu.mutation.SetHeadacount(i)
+// SetNickname sets the "nickname" field.
+func (mu *MemberUpdate) SetNickname(s string) *MemberUpdate {
+	mu.mutation.SetNickname(s)
 	return mu
 }
 
-// SetNillableHeadacount sets the "headacount" field if the given value is not nil.
-func (mu *MemberUpdate) SetNillableHeadacount(i *int8) *MemberUpdate {
-	if i != nil {
-		mu.SetHeadacount(*i)
+// SetNillableNickname sets the "nickname" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableNickname(s *string) *MemberUpdate {
+	if s != nil {
+		mu.SetNickname(*s)
 	}
 	return mu
 }
 
-// AddHeadacount adds i to the "headacount" field.
-func (mu *MemberUpdate) AddHeadacount(i int8) *MemberUpdate {
-	mu.mutation.AddHeadacount(i)
+// SetBio sets the "bio" field.
+func (mu *MemberUpdate) SetBio(s string) *MemberUpdate {
+	mu.mutation.SetBio(s)
+	return mu
+}
+
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableBio(s *string) *MemberUpdate {
+	if s != nil {
+		mu.SetBio(*s)
+	}
+	return mu
+}
+
+// SetPreferredRole sets the "preferred_role" field.
+func (mu *MemberUpdate) SetPreferredRole(s string) *MemberUpdate {
+	mu.mutation.SetPreferredRole(s)
+	return mu
+}
+
+// SetNillablePreferredRole sets the "preferred_role" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillablePreferredRole(s *string) *MemberUpdate {
+	if s != nil {
+		mu.SetPreferredRole(*s)
+	}
 	return mu
 }
 
@@ -129,20 +129,7 @@ func (mu *MemberUpdate) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (mu *MemberUpdate) check() error {
-	if v, ok := mu.mutation.MemberID(); ok {
-		if err := member.MemberIDValidator(v); err != nil {
-			return &ValidationError{Name: "member_id", err: fmt.Errorf(`ent: validator failed for field "Member.member_id": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := mu.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(member.Table, member.Columns, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	if ps := mu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -151,23 +138,20 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := mu.mutation.MemberID(); ok {
-		_spec.SetField(member.FieldMemberID, field.TypeInt64, value)
+	if value, ok := mu.mutation.Email(); ok {
+		_spec.SetField(member.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := mu.mutation.AddedMemberID(); ok {
-		_spec.AddField(member.FieldMemberID, field.TypeInt64, value)
+	if value, ok := mu.mutation.Picture(); ok {
+		_spec.SetField(member.FieldPicture, field.TypeString, value)
 	}
-	if value, ok := mu.mutation.Name(); ok {
-		_spec.SetField(member.FieldName, field.TypeString, value)
+	if value, ok := mu.mutation.Nickname(); ok {
+		_spec.SetField(member.FieldNickname, field.TypeString, value)
 	}
-	if value, ok := mu.mutation.Description(); ok {
-		_spec.SetField(member.FieldDescription, field.TypeString, value)
+	if value, ok := mu.mutation.Bio(); ok {
+		_spec.SetField(member.FieldBio, field.TypeString, value)
 	}
-	if value, ok := mu.mutation.Headacount(); ok {
-		_spec.SetField(member.FieldHeadacount, field.TypeInt8, value)
-	}
-	if value, ok := mu.mutation.AddedHeadacount(); ok {
-		_spec.AddField(member.FieldHeadacount, field.TypeInt8, value)
+	if value, ok := mu.mutation.PreferredRole(); ok {
+		_spec.SetField(member.FieldPreferredRole, field.TypeString, value)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -189,73 +173,73 @@ type MemberUpdateOne struct {
 	mutation *MemberMutation
 }
 
-// SetMemberID sets the "member_id" field.
-func (muo *MemberUpdateOne) SetMemberID(i int64) *MemberUpdateOne {
-	muo.mutation.ResetMemberID()
-	muo.mutation.SetMemberID(i)
+// SetEmail sets the "email" field.
+func (muo *MemberUpdateOne) SetEmail(s string) *MemberUpdateOne {
+	muo.mutation.SetEmail(s)
 	return muo
 }
 
-// SetNillableMemberID sets the "member_id" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableMemberID(i *int64) *MemberUpdateOne {
-	if i != nil {
-		muo.SetMemberID(*i)
-	}
-	return muo
-}
-
-// AddMemberID adds i to the "member_id" field.
-func (muo *MemberUpdateOne) AddMemberID(i int64) *MemberUpdateOne {
-	muo.mutation.AddMemberID(i)
-	return muo
-}
-
-// SetName sets the "name" field.
-func (muo *MemberUpdateOne) SetName(s string) *MemberUpdateOne {
-	muo.mutation.SetName(s)
-	return muo
-}
-
-// SetNillableName sets the "name" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableName(s *string) *MemberUpdateOne {
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableEmail(s *string) *MemberUpdateOne {
 	if s != nil {
-		muo.SetName(*s)
+		muo.SetEmail(*s)
 	}
 	return muo
 }
 
-// SetDescription sets the "description" field.
-func (muo *MemberUpdateOne) SetDescription(s string) *MemberUpdateOne {
-	muo.mutation.SetDescription(s)
+// SetPicture sets the "picture" field.
+func (muo *MemberUpdateOne) SetPicture(s string) *MemberUpdateOne {
+	muo.mutation.SetPicture(s)
 	return muo
 }
 
-// SetNillableDescription sets the "description" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableDescription(s *string) *MemberUpdateOne {
+// SetNillablePicture sets the "picture" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillablePicture(s *string) *MemberUpdateOne {
 	if s != nil {
-		muo.SetDescription(*s)
+		muo.SetPicture(*s)
 	}
 	return muo
 }
 
-// SetHeadacount sets the "headacount" field.
-func (muo *MemberUpdateOne) SetHeadacount(i int8) *MemberUpdateOne {
-	muo.mutation.ResetHeadacount()
-	muo.mutation.SetHeadacount(i)
+// SetNickname sets the "nickname" field.
+func (muo *MemberUpdateOne) SetNickname(s string) *MemberUpdateOne {
+	muo.mutation.SetNickname(s)
 	return muo
 }
 
-// SetNillableHeadacount sets the "headacount" field if the given value is not nil.
-func (muo *MemberUpdateOne) SetNillableHeadacount(i *int8) *MemberUpdateOne {
-	if i != nil {
-		muo.SetHeadacount(*i)
+// SetNillableNickname sets the "nickname" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableNickname(s *string) *MemberUpdateOne {
+	if s != nil {
+		muo.SetNickname(*s)
 	}
 	return muo
 }
 
-// AddHeadacount adds i to the "headacount" field.
-func (muo *MemberUpdateOne) AddHeadacount(i int8) *MemberUpdateOne {
-	muo.mutation.AddHeadacount(i)
+// SetBio sets the "bio" field.
+func (muo *MemberUpdateOne) SetBio(s string) *MemberUpdateOne {
+	muo.mutation.SetBio(s)
+	return muo
+}
+
+// SetNillableBio sets the "bio" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableBio(s *string) *MemberUpdateOne {
+	if s != nil {
+		muo.SetBio(*s)
+	}
+	return muo
+}
+
+// SetPreferredRole sets the "preferred_role" field.
+func (muo *MemberUpdateOne) SetPreferredRole(s string) *MemberUpdateOne {
+	muo.mutation.SetPreferredRole(s)
+	return muo
+}
+
+// SetNillablePreferredRole sets the "preferred_role" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillablePreferredRole(s *string) *MemberUpdateOne {
+	if s != nil {
+		muo.SetPreferredRole(*s)
+	}
 	return muo
 }
 
@@ -304,20 +288,7 @@ func (muo *MemberUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (muo *MemberUpdateOne) check() error {
-	if v, ok := muo.mutation.MemberID(); ok {
-		if err := member.MemberIDValidator(v); err != nil {
-			return &ValidationError{Name: "member_id", err: fmt.Errorf(`ent: validator failed for field "Member.member_id": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err error) {
-	if err := muo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(member.Table, member.Columns, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	id, ok := muo.mutation.ID()
 	if !ok {
@@ -343,23 +314,20 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 			}
 		}
 	}
-	if value, ok := muo.mutation.MemberID(); ok {
-		_spec.SetField(member.FieldMemberID, field.TypeInt64, value)
+	if value, ok := muo.mutation.Email(); ok {
+		_spec.SetField(member.FieldEmail, field.TypeString, value)
 	}
-	if value, ok := muo.mutation.AddedMemberID(); ok {
-		_spec.AddField(member.FieldMemberID, field.TypeInt64, value)
+	if value, ok := muo.mutation.Picture(); ok {
+		_spec.SetField(member.FieldPicture, field.TypeString, value)
 	}
-	if value, ok := muo.mutation.Name(); ok {
-		_spec.SetField(member.FieldName, field.TypeString, value)
+	if value, ok := muo.mutation.Nickname(); ok {
+		_spec.SetField(member.FieldNickname, field.TypeString, value)
 	}
-	if value, ok := muo.mutation.Description(); ok {
-		_spec.SetField(member.FieldDescription, field.TypeString, value)
+	if value, ok := muo.mutation.Bio(); ok {
+		_spec.SetField(member.FieldBio, field.TypeString, value)
 	}
-	if value, ok := muo.mutation.Headacount(); ok {
-		_spec.SetField(member.FieldHeadacount, field.TypeInt8, value)
-	}
-	if value, ok := muo.mutation.AddedHeadacount(); ok {
-		_spec.AddField(member.FieldHeadacount, field.TypeInt8, value)
+	if value, ok := muo.mutation.PreferredRole(); ok {
+		_spec.SetField(member.FieldPreferredRole, field.TypeString, value)
 	}
 	_node = &Member{config: muo.config}
 	_spec.Assign = _node.assignValues

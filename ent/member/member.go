@@ -11,14 +11,16 @@ const (
 	Label = "member"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldMemberID holds the string denoting the member_id field in the database.
-	FieldMemberID = "member_id"
-	// FieldName holds the string denoting the name field in the database.
-	FieldName = "name"
-	// FieldDescription holds the string denoting the description field in the database.
-	FieldDescription = "description"
-	// FieldHeadacount holds the string denoting the headacount field in the database.
-	FieldHeadacount = "headacount"
+	// FieldEmail holds the string denoting the email field in the database.
+	FieldEmail = "email"
+	// FieldPicture holds the string denoting the picture field in the database.
+	FieldPicture = "picture"
+	// FieldNickname holds the string denoting the nickname field in the database.
+	FieldNickname = "nickname"
+	// FieldBio holds the string denoting the bio field in the database.
+	FieldBio = "bio"
+	// FieldPreferredRole holds the string denoting the preferred_role field in the database.
+	FieldPreferredRole = "preferred_role"
 	// Table holds the table name of the member in the database.
 	Table = "members"
 )
@@ -26,10 +28,11 @@ const (
 // Columns holds all SQL columns for member fields.
 var Columns = []string{
 	FieldID,
-	FieldMemberID,
-	FieldName,
-	FieldDescription,
-	FieldHeadacount,
+	FieldEmail,
+	FieldPicture,
+	FieldNickname,
+	FieldBio,
+	FieldPreferredRole,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -42,11 +45,6 @@ func ValidColumn(column string) bool {
 	return false
 }
 
-var (
-	// MemberIDValidator is a validator for the "member_id" field. It is called by the builders before save.
-	MemberIDValidator func(int64) error
-)
-
 // OrderOption defines the ordering options for the Member queries.
 type OrderOption func(*sql.Selector)
 
@@ -55,22 +53,27 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByMemberID orders the results by the member_id field.
-func ByMemberID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldMemberID, opts...).ToFunc()
+// ByEmail orders the results by the email field.
+func ByEmail(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmail, opts...).ToFunc()
 }
 
-// ByName orders the results by the name field.
-func ByName(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldName, opts...).ToFunc()
+// ByPicture orders the results by the picture field.
+func ByPicture(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPicture, opts...).ToFunc()
 }
 
-// ByDescription orders the results by the description field.
-func ByDescription(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldDescription, opts...).ToFunc()
+// ByNickname orders the results by the nickname field.
+func ByNickname(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldNickname, opts...).ToFunc()
 }
 
-// ByHeadacount orders the results by the headacount field.
-func ByHeadacount(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldHeadacount, opts...).ToFunc()
+// ByBio orders the results by the bio field.
+func ByBio(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBio, opts...).ToFunc()
+}
+
+// ByPreferredRole orders the results by the preferred_role field.
+func ByPreferredRole(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPreferredRole, opts...).ToFunc()
 }

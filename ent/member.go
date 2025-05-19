@@ -16,15 +16,17 @@ type Member struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// MemberID holds the value of the "member_id" field.
-	MemberID int64 `json:"member_id,omitempty"`
-	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
-	// Description holds the value of the "description" field.
-	Description string `json:"description,omitempty"`
-	// Headacount holds the value of the "headacount" field.
-	Headacount   int8 `json:"headacount,omitempty"`
-	selectValues sql.SelectValues
+	// Email holds the value of the "email" field.
+	Email string `json:"email,omitempty"`
+	// Picture holds the value of the "picture" field.
+	Picture string `json:"picture,omitempty"`
+	// Nickname holds the value of the "nickname" field.
+	Nickname string `json:"nickname,omitempty"`
+	// Bio holds the value of the "bio" field.
+	Bio string `json:"bio,omitempty"`
+	// PreferredRole holds the value of the "preferred_role" field.
+	PreferredRole string `json:"preferred_role,omitempty"`
+	selectValues  sql.SelectValues
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -32,9 +34,9 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case member.FieldID, member.FieldMemberID, member.FieldHeadacount:
+		case member.FieldID:
 			values[i] = new(sql.NullInt64)
-		case member.FieldName, member.FieldDescription:
+		case member.FieldEmail, member.FieldPicture, member.FieldNickname, member.FieldBio, member.FieldPreferredRole:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -57,29 +59,35 @@ func (m *Member) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			m.ID = int(value.Int64)
-		case member.FieldMemberID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field member_id", values[i])
-			} else if value.Valid {
-				m.MemberID = value.Int64
-			}
-		case member.FieldName:
+		case member.FieldEmail:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field name", values[i])
+				return fmt.Errorf("unexpected type %T for field email", values[i])
 			} else if value.Valid {
-				m.Name = value.String
+				m.Email = value.String
 			}
-		case member.FieldDescription:
+		case member.FieldPicture:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field description", values[i])
+				return fmt.Errorf("unexpected type %T for field picture", values[i])
 			} else if value.Valid {
-				m.Description = value.String
+				m.Picture = value.String
 			}
-		case member.FieldHeadacount:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field headacount", values[i])
+		case member.FieldNickname:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field nickname", values[i])
 			} else if value.Valid {
-				m.Headacount = int8(value.Int64)
+				m.Nickname = value.String
+			}
+		case member.FieldBio:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field bio", values[i])
+			} else if value.Valid {
+				m.Bio = value.String
+			}
+		case member.FieldPreferredRole:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field preferred_role", values[i])
+			} else if value.Valid {
+				m.PreferredRole = value.String
 			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
@@ -117,17 +125,20 @@ func (m *Member) String() string {
 	var builder strings.Builder
 	builder.WriteString("Member(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", m.ID))
-	builder.WriteString("member_id=")
-	builder.WriteString(fmt.Sprintf("%v", m.MemberID))
+	builder.WriteString("email=")
+	builder.WriteString(m.Email)
 	builder.WriteString(", ")
-	builder.WriteString("name=")
-	builder.WriteString(m.Name)
+	builder.WriteString("picture=")
+	builder.WriteString(m.Picture)
 	builder.WriteString(", ")
-	builder.WriteString("description=")
-	builder.WriteString(m.Description)
+	builder.WriteString("nickname=")
+	builder.WriteString(m.Nickname)
 	builder.WriteString(", ")
-	builder.WriteString("headacount=")
-	builder.WriteString(fmt.Sprintf("%v", m.Headacount))
+	builder.WriteString("bio=")
+	builder.WriteString(m.Bio)
+	builder.WriteString(", ")
+	builder.WriteString("preferred_role=")
+	builder.WriteString(m.PreferredRole)
 	builder.WriteByte(')')
 	return builder.String()
 }

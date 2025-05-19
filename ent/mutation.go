@@ -4,6 +4,7 @@ package ent
 
 import (
 	"backend_golang/ent/member"
+	"backend_golang/ent/position"
 	"backend_golang/ent/predicate"
 	"backend_golang/ent/team"
 	"context"
@@ -24,26 +25,26 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeMember = "Member"
-	TypeTeam   = "Team"
+	TypeMember   = "Member"
+	TypePosition = "Position"
+	TypeTeam     = "Team"
 )
 
 // MemberMutation represents an operation that mutates the Member nodes in the graph.
 type MemberMutation struct {
 	config
-	op            Op
-	typ           string
-	id            *int
-	member_id     *int64
-	addmember_id  *int64
-	name          *string
-	description   *string
-	headacount    *int8
-	addheadacount *int8
-	clearedFields map[string]struct{}
-	done          bool
-	oldValue      func(context.Context) (*Member, error)
-	predicates    []predicate.Member
+	op             Op
+	typ            string
+	id             *int
+	email          *string
+	picture        *string
+	nickname       *string
+	bio            *string
+	preferred_role *string
+	clearedFields  map[string]struct{}
+	done           bool
+	oldValue       func(context.Context) (*Member, error)
+	predicates     []predicate.Member
 }
 
 var _ ent.Mutation = (*MemberMutation)(nil)
@@ -144,188 +145,184 @@ func (m *MemberMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
-// SetMemberID sets the "member_id" field.
-func (m *MemberMutation) SetMemberID(i int64) {
-	m.member_id = &i
-	m.addmember_id = nil
+// SetEmail sets the "email" field.
+func (m *MemberMutation) SetEmail(s string) {
+	m.email = &s
 }
 
-// MemberID returns the value of the "member_id" field in the mutation.
-func (m *MemberMutation) MemberID() (r int64, exists bool) {
-	v := m.member_id
+// Email returns the value of the "email" field in the mutation.
+func (m *MemberMutation) Email() (r string, exists bool) {
+	v := m.email
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldMemberID returns the old "member_id" field's value of the Member entity.
+// OldEmail returns the old "email" field's value of the Member entity.
 // If the Member object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MemberMutation) OldMemberID(ctx context.Context) (v int64, err error) {
+func (m *MemberMutation) OldEmail(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldMemberID is only allowed on UpdateOne operations")
+		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldMemberID requires an ID field in the mutation")
+		return v, errors.New("OldEmail requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldMemberID: %w", err)
+		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
 	}
-	return oldValue.MemberID, nil
+	return oldValue.Email, nil
 }
 
-// AddMemberID adds i to the "member_id" field.
-func (m *MemberMutation) AddMemberID(i int64) {
-	if m.addmember_id != nil {
-		*m.addmember_id += i
-	} else {
-		m.addmember_id = &i
-	}
+// ResetEmail resets all changes to the "email" field.
+func (m *MemberMutation) ResetEmail() {
+	m.email = nil
 }
 
-// AddedMemberID returns the value that was added to the "member_id" field in this mutation.
-func (m *MemberMutation) AddedMemberID() (r int64, exists bool) {
-	v := m.addmember_id
+// SetPicture sets the "picture" field.
+func (m *MemberMutation) SetPicture(s string) {
+	m.picture = &s
+}
+
+// Picture returns the value of the "picture" field in the mutation.
+func (m *MemberMutation) Picture() (r string, exists bool) {
+	v := m.picture
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetMemberID resets all changes to the "member_id" field.
-func (m *MemberMutation) ResetMemberID() {
-	m.member_id = nil
-	m.addmember_id = nil
-}
-
-// SetName sets the "name" field.
-func (m *MemberMutation) SetName(s string) {
-	m.name = &s
-}
-
-// Name returns the value of the "name" field in the mutation.
-func (m *MemberMutation) Name() (r string, exists bool) {
-	v := m.name
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldName returns the old "name" field's value of the Member entity.
+// OldPicture returns the old "picture" field's value of the Member entity.
 // If the Member object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MemberMutation) OldName(ctx context.Context) (v string, err error) {
+func (m *MemberMutation) OldPicture(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldName is only allowed on UpdateOne operations")
+		return v, errors.New("OldPicture is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldName requires an ID field in the mutation")
+		return v, errors.New("OldPicture requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldName: %w", err)
+		return v, fmt.Errorf("querying old value for OldPicture: %w", err)
 	}
-	return oldValue.Name, nil
+	return oldValue.Picture, nil
 }
 
-// ResetName resets all changes to the "name" field.
-func (m *MemberMutation) ResetName() {
-	m.name = nil
+// ResetPicture resets all changes to the "picture" field.
+func (m *MemberMutation) ResetPicture() {
+	m.picture = nil
 }
 
-// SetDescription sets the "description" field.
-func (m *MemberMutation) SetDescription(s string) {
-	m.description = &s
+// SetNickname sets the "nickname" field.
+func (m *MemberMutation) SetNickname(s string) {
+	m.nickname = &s
 }
 
-// Description returns the value of the "description" field in the mutation.
-func (m *MemberMutation) Description() (r string, exists bool) {
-	v := m.description
+// Nickname returns the value of the "nickname" field in the mutation.
+func (m *MemberMutation) Nickname() (r string, exists bool) {
+	v := m.nickname
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldDescription returns the old "description" field's value of the Member entity.
+// OldNickname returns the old "nickname" field's value of the Member entity.
 // If the Member object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MemberMutation) OldDescription(ctx context.Context) (v string, err error) {
+func (m *MemberMutation) OldNickname(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+		return v, errors.New("OldNickname is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldDescription requires an ID field in the mutation")
+		return v, errors.New("OldNickname requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+		return v, fmt.Errorf("querying old value for OldNickname: %w", err)
 	}
-	return oldValue.Description, nil
+	return oldValue.Nickname, nil
 }
 
-// ResetDescription resets all changes to the "description" field.
-func (m *MemberMutation) ResetDescription() {
-	m.description = nil
+// ResetNickname resets all changes to the "nickname" field.
+func (m *MemberMutation) ResetNickname() {
+	m.nickname = nil
 }
 
-// SetHeadacount sets the "headacount" field.
-func (m *MemberMutation) SetHeadacount(i int8) {
-	m.headacount = &i
-	m.addheadacount = nil
+// SetBio sets the "bio" field.
+func (m *MemberMutation) SetBio(s string) {
+	m.bio = &s
 }
 
-// Headacount returns the value of the "headacount" field in the mutation.
-func (m *MemberMutation) Headacount() (r int8, exists bool) {
-	v := m.headacount
+// Bio returns the value of the "bio" field in the mutation.
+func (m *MemberMutation) Bio() (r string, exists bool) {
+	v := m.bio
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// OldHeadacount returns the old "headacount" field's value of the Member entity.
+// OldBio returns the old "bio" field's value of the Member entity.
 // If the Member object wasn't provided to the builder, the object is fetched from the database.
 // An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *MemberMutation) OldHeadacount(ctx context.Context) (v int8, err error) {
+func (m *MemberMutation) OldBio(ctx context.Context) (v string, err error) {
 	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldHeadacount is only allowed on UpdateOne operations")
+		return v, errors.New("OldBio is only allowed on UpdateOne operations")
 	}
 	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldHeadacount requires an ID field in the mutation")
+		return v, errors.New("OldBio requires an ID field in the mutation")
 	}
 	oldValue, err := m.oldValue(ctx)
 	if err != nil {
-		return v, fmt.Errorf("querying old value for OldHeadacount: %w", err)
+		return v, fmt.Errorf("querying old value for OldBio: %w", err)
 	}
-	return oldValue.Headacount, nil
+	return oldValue.Bio, nil
 }
 
-// AddHeadacount adds i to the "headacount" field.
-func (m *MemberMutation) AddHeadacount(i int8) {
-	if m.addheadacount != nil {
-		*m.addheadacount += i
-	} else {
-		m.addheadacount = &i
-	}
+// ResetBio resets all changes to the "bio" field.
+func (m *MemberMutation) ResetBio() {
+	m.bio = nil
 }
 
-// AddedHeadacount returns the value that was added to the "headacount" field in this mutation.
-func (m *MemberMutation) AddedHeadacount() (r int8, exists bool) {
-	v := m.addheadacount
+// SetPreferredRole sets the "preferred_role" field.
+func (m *MemberMutation) SetPreferredRole(s string) {
+	m.preferred_role = &s
+}
+
+// PreferredRole returns the value of the "preferred_role" field in the mutation.
+func (m *MemberMutation) PreferredRole() (r string, exists bool) {
+	v := m.preferred_role
 	if v == nil {
 		return
 	}
 	return *v, true
 }
 
-// ResetHeadacount resets all changes to the "headacount" field.
-func (m *MemberMutation) ResetHeadacount() {
-	m.headacount = nil
-	m.addheadacount = nil
+// OldPreferredRole returns the old "preferred_role" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldPreferredRole(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPreferredRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPreferredRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPreferredRole: %w", err)
+	}
+	return oldValue.PreferredRole, nil
+}
+
+// ResetPreferredRole resets all changes to the "preferred_role" field.
+func (m *MemberMutation) ResetPreferredRole() {
+	m.preferred_role = nil
 }
 
 // Where appends a list predicates to the MemberMutation builder.
@@ -362,18 +359,21 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.member_id != nil {
-		fields = append(fields, member.FieldMemberID)
+	fields := make([]string, 0, 5)
+	if m.email != nil {
+		fields = append(fields, member.FieldEmail)
 	}
-	if m.name != nil {
-		fields = append(fields, member.FieldName)
+	if m.picture != nil {
+		fields = append(fields, member.FieldPicture)
 	}
-	if m.description != nil {
-		fields = append(fields, member.FieldDescription)
+	if m.nickname != nil {
+		fields = append(fields, member.FieldNickname)
 	}
-	if m.headacount != nil {
-		fields = append(fields, member.FieldHeadacount)
+	if m.bio != nil {
+		fields = append(fields, member.FieldBio)
+	}
+	if m.preferred_role != nil {
+		fields = append(fields, member.FieldPreferredRole)
 	}
 	return fields
 }
@@ -383,14 +383,16 @@ func (m *MemberMutation) Fields() []string {
 // schema.
 func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case member.FieldMemberID:
-		return m.MemberID()
-	case member.FieldName:
-		return m.Name()
-	case member.FieldDescription:
-		return m.Description()
-	case member.FieldHeadacount:
-		return m.Headacount()
+	case member.FieldEmail:
+		return m.Email()
+	case member.FieldPicture:
+		return m.Picture()
+	case member.FieldNickname:
+		return m.Nickname()
+	case member.FieldBio:
+		return m.Bio()
+	case member.FieldPreferredRole:
+		return m.PreferredRole()
 	}
 	return nil, false
 }
@@ -400,14 +402,16 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case member.FieldMemberID:
-		return m.OldMemberID(ctx)
-	case member.FieldName:
-		return m.OldName(ctx)
-	case member.FieldDescription:
-		return m.OldDescription(ctx)
-	case member.FieldHeadacount:
-		return m.OldHeadacount(ctx)
+	case member.FieldEmail:
+		return m.OldEmail(ctx)
+	case member.FieldPicture:
+		return m.OldPicture(ctx)
+	case member.FieldNickname:
+		return m.OldNickname(ctx)
+	case member.FieldBio:
+		return m.OldBio(ctx)
+	case member.FieldPreferredRole:
+		return m.OldPreferredRole(ctx)
 	}
 	return nil, fmt.Errorf("unknown Member field %s", name)
 }
@@ -417,33 +421,40 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *MemberMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case member.FieldMemberID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetMemberID(v)
-		return nil
-	case member.FieldName:
+	case member.FieldEmail:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetName(v)
+		m.SetEmail(v)
 		return nil
-	case member.FieldDescription:
+	case member.FieldPicture:
 		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetDescription(v)
+		m.SetPicture(v)
 		return nil
-	case member.FieldHeadacount:
-		v, ok := value.(int8)
+	case member.FieldNickname:
+		v, ok := value.(string)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
-		m.SetHeadacount(v)
+		m.SetNickname(v)
+		return nil
+	case member.FieldBio:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBio(v)
+		return nil
+	case member.FieldPreferredRole:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPreferredRole(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
@@ -452,26 +463,13 @@ func (m *MemberMutation) SetField(name string, value ent.Value) error {
 // AddedFields returns all numeric fields that were incremented/decremented during
 // this mutation.
 func (m *MemberMutation) AddedFields() []string {
-	var fields []string
-	if m.addmember_id != nil {
-		fields = append(fields, member.FieldMemberID)
-	}
-	if m.addheadacount != nil {
-		fields = append(fields, member.FieldHeadacount)
-	}
-	return fields
+	return nil
 }
 
 // AddedField returns the numeric value that was incremented/decremented on a field
 // with the given name. The second boolean return value indicates that this field
 // was not set, or was not defined in the schema.
 func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
-	switch name {
-	case member.FieldMemberID:
-		return m.AddedMemberID()
-	case member.FieldHeadacount:
-		return m.AddedHeadacount()
-	}
 	return nil, false
 }
 
@@ -480,20 +478,6 @@ func (m *MemberMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *MemberMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case member.FieldMemberID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddMemberID(v)
-		return nil
-	case member.FieldHeadacount:
-		v, ok := value.(int8)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddHeadacount(v)
-		return nil
 	}
 	return fmt.Errorf("unknown Member numeric field %s", name)
 }
@@ -521,17 +505,20 @@ func (m *MemberMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *MemberMutation) ResetField(name string) error {
 	switch name {
-	case member.FieldMemberID:
-		m.ResetMemberID()
+	case member.FieldEmail:
+		m.ResetEmail()
 		return nil
-	case member.FieldName:
-		m.ResetName()
+	case member.FieldPicture:
+		m.ResetPicture()
 		return nil
-	case member.FieldDescription:
-		m.ResetDescription()
+	case member.FieldNickname:
+		m.ResetNickname()
 		return nil
-	case member.FieldHeadacount:
-		m.ResetHeadacount()
+	case member.FieldBio:
+		m.ResetBio()
+		return nil
+	case member.FieldPreferredRole:
+		m.ResetPreferredRole()
 		return nil
 	}
 	return fmt.Errorf("unknown Member field %s", name)
@@ -585,22 +572,506 @@ func (m *MemberMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Member edge %s", name)
 }
 
-// TeamMutation represents an operation that mutates the Team nodes in the graph.
-type TeamMutation struct {
+// PositionMutation represents an operation that mutates the Position nodes in the graph.
+type PositionMutation struct {
 	config
 	op            Op
 	typ           string
 	id            *int
-	team_id       *int64
-	addteam_id    *int64
-	name          *string
-	description   *string
-	headcount     *int8
-	addheadcount  *int8
+	role          *string
+	vacancy       *int8
+	addvacancy    *int8
 	clearedFields map[string]struct{}
+	team          *int
+	clearedteam   bool
 	done          bool
-	oldValue      func(context.Context) (*Team, error)
-	predicates    []predicate.Team
+	oldValue      func(context.Context) (*Position, error)
+	predicates    []predicate.Position
+}
+
+var _ ent.Mutation = (*PositionMutation)(nil)
+
+// positionOption allows management of the mutation configuration using functional options.
+type positionOption func(*PositionMutation)
+
+// newPositionMutation creates new mutation for the Position entity.
+func newPositionMutation(c config, op Op, opts ...positionOption) *PositionMutation {
+	m := &PositionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypePosition,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withPositionID sets the ID field of the mutation.
+func withPositionID(id int) positionOption {
+	return func(m *PositionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Position
+		)
+		m.oldValue = func(ctx context.Context) (*Position, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Position.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withPosition sets the old Position of the mutation.
+func withPosition(node *Position) positionOption {
+	return func(m *PositionMutation) {
+		m.oldValue = func(context.Context) (*Position, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m PositionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m PositionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *PositionMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *PositionMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().Position.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetRole sets the "role" field.
+func (m *PositionMutation) SetRole(s string) {
+	m.role = &s
+}
+
+// Role returns the value of the "role" field in the mutation.
+func (m *PositionMutation) Role() (r string, exists bool) {
+	v := m.role
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRole returns the old "role" field's value of the Position entity.
+// If the Position object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PositionMutation) OldRole(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRole is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRole requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRole: %w", err)
+	}
+	return oldValue.Role, nil
+}
+
+// ResetRole resets all changes to the "role" field.
+func (m *PositionMutation) ResetRole() {
+	m.role = nil
+}
+
+// SetVacancy sets the "vacancy" field.
+func (m *PositionMutation) SetVacancy(i int8) {
+	m.vacancy = &i
+	m.addvacancy = nil
+}
+
+// Vacancy returns the value of the "vacancy" field in the mutation.
+func (m *PositionMutation) Vacancy() (r int8, exists bool) {
+	v := m.vacancy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldVacancy returns the old "vacancy" field's value of the Position entity.
+// If the Position object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PositionMutation) OldVacancy(ctx context.Context) (v int8, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldVacancy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldVacancy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldVacancy: %w", err)
+	}
+	return oldValue.Vacancy, nil
+}
+
+// AddVacancy adds i to the "vacancy" field.
+func (m *PositionMutation) AddVacancy(i int8) {
+	if m.addvacancy != nil {
+		*m.addvacancy += i
+	} else {
+		m.addvacancy = &i
+	}
+}
+
+// AddedVacancy returns the value that was added to the "vacancy" field in this mutation.
+func (m *PositionMutation) AddedVacancy() (r int8, exists bool) {
+	v := m.addvacancy
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetVacancy resets all changes to the "vacancy" field.
+func (m *PositionMutation) ResetVacancy() {
+	m.vacancy = nil
+	m.addvacancy = nil
+}
+
+// SetTeamID sets the "team" edge to the Team entity by id.
+func (m *PositionMutation) SetTeamID(id int) {
+	m.team = &id
+}
+
+// ClearTeam clears the "team" edge to the Team entity.
+func (m *PositionMutation) ClearTeam() {
+	m.clearedteam = true
+}
+
+// TeamCleared reports if the "team" edge to the Team entity was cleared.
+func (m *PositionMutation) TeamCleared() bool {
+	return m.clearedteam
+}
+
+// TeamID returns the "team" edge ID in the mutation.
+func (m *PositionMutation) TeamID() (id int, exists bool) {
+	if m.team != nil {
+		return *m.team, true
+	}
+	return
+}
+
+// TeamIDs returns the "team" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TeamID instead. It exists only for internal usage by the builders.
+func (m *PositionMutation) TeamIDs() (ids []int) {
+	if id := m.team; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTeam resets all changes to the "team" edge.
+func (m *PositionMutation) ResetTeam() {
+	m.team = nil
+	m.clearedteam = false
+}
+
+// Where appends a list predicates to the PositionMutation builder.
+func (m *PositionMutation) Where(ps ...predicate.Position) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the PositionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *PositionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.Position, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *PositionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *PositionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (Position).
+func (m *PositionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *PositionMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.role != nil {
+		fields = append(fields, position.FieldRole)
+	}
+	if m.vacancy != nil {
+		fields = append(fields, position.FieldVacancy)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *PositionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case position.FieldRole:
+		return m.Role()
+	case position.FieldVacancy:
+		return m.Vacancy()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *PositionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case position.FieldRole:
+		return m.OldRole(ctx)
+	case position.FieldVacancy:
+		return m.OldVacancy(ctx)
+	}
+	return nil, fmt.Errorf("unknown Position field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PositionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case position.FieldRole:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRole(v)
+		return nil
+	case position.FieldVacancy:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetVacancy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Position field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *PositionMutation) AddedFields() []string {
+	var fields []string
+	if m.addvacancy != nil {
+		fields = append(fields, position.FieldVacancy)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *PositionMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case position.FieldVacancy:
+		return m.AddedVacancy()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *PositionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case position.FieldVacancy:
+		v, ok := value.(int8)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddVacancy(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Position numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *PositionMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *PositionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *PositionMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Position nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *PositionMutation) ResetField(name string) error {
+	switch name {
+	case position.FieldRole:
+		m.ResetRole()
+		return nil
+	case position.FieldVacancy:
+		m.ResetVacancy()
+		return nil
+	}
+	return fmt.Errorf("unknown Position field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *PositionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.team != nil {
+		edges = append(edges, position.EdgeTeam)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *PositionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case position.EdgeTeam:
+		if id := m.team; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *PositionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 1)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *PositionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *PositionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 1)
+	if m.clearedteam {
+		edges = append(edges, position.EdgeTeam)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *PositionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case position.EdgeTeam:
+		return m.clearedteam
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *PositionMutation) ClearEdge(name string) error {
+	switch name {
+	case position.EdgeTeam:
+		m.ClearTeam()
+		return nil
+	}
+	return fmt.Errorf("unknown Position unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *PositionMutation) ResetEdge(name string) error {
+	switch name {
+	case position.EdgeTeam:
+		m.ResetTeam()
+		return nil
+	}
+	return fmt.Errorf("unknown Position edge %s", name)
+}
+
+// TeamMutation represents an operation that mutates the Team nodes in the graph.
+type TeamMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	name             *string
+	description      *string
+	headcount        *int8
+	addheadcount     *int8
+	clearedFields    map[string]struct{}
+	positions        map[int]struct{}
+	removedpositions map[int]struct{}
+	clearedpositions bool
+	done             bool
+	oldValue         func(context.Context) (*Team, error)
+	predicates       []predicate.Team
 }
 
 var _ ent.Mutation = (*TeamMutation)(nil)
@@ -699,62 +1170,6 @@ func (m *TeamMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
-}
-
-// SetTeamID sets the "team_id" field.
-func (m *TeamMutation) SetTeamID(i int64) {
-	m.team_id = &i
-	m.addteam_id = nil
-}
-
-// TeamID returns the value of the "team_id" field in the mutation.
-func (m *TeamMutation) TeamID() (r int64, exists bool) {
-	v := m.team_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldTeamID returns the old "team_id" field's value of the Team entity.
-// If the Team object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TeamMutation) OldTeamID(ctx context.Context) (v int64, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldTeamID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
-	}
-	return oldValue.TeamID, nil
-}
-
-// AddTeamID adds i to the "team_id" field.
-func (m *TeamMutation) AddTeamID(i int64) {
-	if m.addteam_id != nil {
-		*m.addteam_id += i
-	} else {
-		m.addteam_id = &i
-	}
-}
-
-// AddedTeamID returns the value that was added to the "team_id" field in this mutation.
-func (m *TeamMutation) AddedTeamID() (r int64, exists bool) {
-	v := m.addteam_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetTeamID resets all changes to the "team_id" field.
-func (m *TeamMutation) ResetTeamID() {
-	m.team_id = nil
-	m.addteam_id = nil
 }
 
 // SetName sets the "name" field.
@@ -885,6 +1300,60 @@ func (m *TeamMutation) ResetHeadcount() {
 	m.addheadcount = nil
 }
 
+// AddPositionIDs adds the "positions" edge to the Position entity by ids.
+func (m *TeamMutation) AddPositionIDs(ids ...int) {
+	if m.positions == nil {
+		m.positions = make(map[int]struct{})
+	}
+	for i := range ids {
+		m.positions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearPositions clears the "positions" edge to the Position entity.
+func (m *TeamMutation) ClearPositions() {
+	m.clearedpositions = true
+}
+
+// PositionsCleared reports if the "positions" edge to the Position entity was cleared.
+func (m *TeamMutation) PositionsCleared() bool {
+	return m.clearedpositions
+}
+
+// RemovePositionIDs removes the "positions" edge to the Position entity by IDs.
+func (m *TeamMutation) RemovePositionIDs(ids ...int) {
+	if m.removedpositions == nil {
+		m.removedpositions = make(map[int]struct{})
+	}
+	for i := range ids {
+		delete(m.positions, ids[i])
+		m.removedpositions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedPositions returns the removed IDs of the "positions" edge to the Position entity.
+func (m *TeamMutation) RemovedPositionsIDs() (ids []int) {
+	for id := range m.removedpositions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// PositionsIDs returns the "positions" edge IDs in the mutation.
+func (m *TeamMutation) PositionsIDs() (ids []int) {
+	for id := range m.positions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetPositions resets all changes to the "positions" edge.
+func (m *TeamMutation) ResetPositions() {
+	m.positions = nil
+	m.clearedpositions = false
+	m.removedpositions = nil
+}
+
 // Where appends a list predicates to the TeamMutation builder.
 func (m *TeamMutation) Where(ps ...predicate.Team) {
 	m.predicates = append(m.predicates, ps...)
@@ -919,10 +1388,7 @@ func (m *TeamMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamMutation) Fields() []string {
-	fields := make([]string, 0, 4)
-	if m.team_id != nil {
-		fields = append(fields, team.FieldTeamID)
-	}
+	fields := make([]string, 0, 3)
 	if m.name != nil {
 		fields = append(fields, team.FieldName)
 	}
@@ -940,8 +1406,6 @@ func (m *TeamMutation) Fields() []string {
 // schema.
 func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 	switch name {
-	case team.FieldTeamID:
-		return m.TeamID()
 	case team.FieldName:
 		return m.Name()
 	case team.FieldDescription:
@@ -957,8 +1421,6 @@ func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
-	case team.FieldTeamID:
-		return m.OldTeamID(ctx)
 	case team.FieldName:
 		return m.OldName(ctx)
 	case team.FieldDescription:
@@ -974,13 +1436,6 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 // type.
 func (m *TeamMutation) SetField(name string, value ent.Value) error {
 	switch name {
-	case team.FieldTeamID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetTeamID(v)
-		return nil
 	case team.FieldName:
 		v, ok := value.(string)
 		if !ok {
@@ -1010,9 +1465,6 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TeamMutation) AddedFields() []string {
 	var fields []string
-	if m.addteam_id != nil {
-		fields = append(fields, team.FieldTeamID)
-	}
 	if m.addheadcount != nil {
 		fields = append(fields, team.FieldHeadcount)
 	}
@@ -1024,8 +1476,6 @@ func (m *TeamMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TeamMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case team.FieldTeamID:
-		return m.AddedTeamID()
 	case team.FieldHeadcount:
 		return m.AddedHeadcount()
 	}
@@ -1037,13 +1487,6 @@ func (m *TeamMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TeamMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case team.FieldTeamID:
-		v, ok := value.(int64)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddTeamID(v)
-		return nil
 	case team.FieldHeadcount:
 		v, ok := value.(int8)
 		if !ok {
@@ -1078,9 +1521,6 @@ func (m *TeamMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *TeamMutation) ResetField(name string) error {
 	switch name {
-	case team.FieldTeamID:
-		m.ResetTeamID()
-		return nil
 	case team.FieldName:
 		m.ResetName()
 		return nil
@@ -1096,48 +1536,84 @@ func (m *TeamMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TeamMutation) AddedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.positions != nil {
+		edges = append(edges, team.EdgePositions)
+	}
 	return edges
 }
 
 // AddedIDs returns all IDs (to other nodes) that were added for the given edge
 // name in this mutation.
 func (m *TeamMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case team.EdgePositions:
+		ids := make([]ent.Value, 0, len(m.positions))
+		for id := range m.positions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TeamMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.removedpositions != nil {
+		edges = append(edges, team.EdgePositions)
+	}
 	return edges
 }
 
 // RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
 // the given name in this mutation.
 func (m *TeamMutation) RemovedIDs(name string) []ent.Value {
+	switch name {
+	case team.EdgePositions:
+		ids := make([]ent.Value, 0, len(m.removedpositions))
+		for id := range m.removedpositions {
+			ids = append(ids, id)
+		}
+		return ids
+	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TeamMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 0)
+	edges := make([]string, 0, 1)
+	if m.clearedpositions {
+		edges = append(edges, team.EdgePositions)
+	}
 	return edges
 }
 
 // EdgeCleared returns a boolean which indicates if the edge with the given name
 // was cleared in this mutation.
 func (m *TeamMutation) EdgeCleared(name string) bool {
+	switch name {
+	case team.EdgePositions:
+		return m.clearedpositions
+	}
 	return false
 }
 
 // ClearEdge clears the value of the edge with the given name. It returns an error
 // if that edge is not defined in the schema.
 func (m *TeamMutation) ClearEdge(name string) error {
+	switch name {
+	}
 	return fmt.Errorf("unknown Team unique edge %s", name)
 }
 
 // ResetEdge resets all changes to the edge with the given name in this mutation.
 // It returns an error if the edge is not defined in the schema.
 func (m *TeamMutation) ResetEdge(name string) error {
+	switch name {
+	case team.EdgePositions:
+		m.ResetPositions()
+		return nil
+	}
 	return fmt.Errorf("unknown Team edge %s", name)
 }

@@ -13,7 +13,7 @@ type Member struct {
 // Fields of the Member.
 func (Member) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("member_id"),
+		// field.Int64("member_id"),
 		field.String("email"),
 		field.String("picture"),
 		field.String("nickname"),

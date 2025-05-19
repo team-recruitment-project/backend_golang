@@ -19,27 +19,33 @@ type MemberCreate struct {
 	hooks    []Hook
 }
 
-// SetMemberID sets the "member_id" field.
-func (mc *MemberCreate) SetMemberID(i int64) *MemberCreate {
-	mc.mutation.SetMemberID(i)
+// SetEmail sets the "email" field.
+func (mc *MemberCreate) SetEmail(s string) *MemberCreate {
+	mc.mutation.SetEmail(s)
 	return mc
 }
 
-// SetName sets the "name" field.
-func (mc *MemberCreate) SetName(s string) *MemberCreate {
-	mc.mutation.SetName(s)
+// SetPicture sets the "picture" field.
+func (mc *MemberCreate) SetPicture(s string) *MemberCreate {
+	mc.mutation.SetPicture(s)
 	return mc
 }
 
-// SetDescription sets the "description" field.
-func (mc *MemberCreate) SetDescription(s string) *MemberCreate {
-	mc.mutation.SetDescription(s)
+// SetNickname sets the "nickname" field.
+func (mc *MemberCreate) SetNickname(s string) *MemberCreate {
+	mc.mutation.SetNickname(s)
 	return mc
 }
 
-// SetHeadacount sets the "headacount" field.
-func (mc *MemberCreate) SetHeadacount(i int8) *MemberCreate {
-	mc.mutation.SetHeadacount(i)
+// SetBio sets the "bio" field.
+func (mc *MemberCreate) SetBio(s string) *MemberCreate {
+	mc.mutation.SetBio(s)
+	return mc
+}
+
+// SetPreferredRole sets the "preferred_role" field.
+func (mc *MemberCreate) SetPreferredRole(s string) *MemberCreate {
+	mc.mutation.SetPreferredRole(s)
 	return mc
 }
 
@@ -77,22 +83,20 @@ func (mc *MemberCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mc *MemberCreate) check() error {
-	if _, ok := mc.mutation.MemberID(); !ok {
-		return &ValidationError{Name: "member_id", err: errors.New(`ent: missing required field "Member.member_id"`)}
+	if _, ok := mc.mutation.Email(); !ok {
+		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Member.email"`)}
 	}
-	if v, ok := mc.mutation.MemberID(); ok {
-		if err := member.MemberIDValidator(v); err != nil {
-			return &ValidationError{Name: "member_id", err: fmt.Errorf(`ent: validator failed for field "Member.member_id": %w`, err)}
-		}
+	if _, ok := mc.mutation.Picture(); !ok {
+		return &ValidationError{Name: "picture", err: errors.New(`ent: missing required field "Member.picture"`)}
 	}
-	if _, ok := mc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Member.name"`)}
+	if _, ok := mc.mutation.Nickname(); !ok {
+		return &ValidationError{Name: "nickname", err: errors.New(`ent: missing required field "Member.nickname"`)}
 	}
-	if _, ok := mc.mutation.Description(); !ok {
-		return &ValidationError{Name: "description", err: errors.New(`ent: missing required field "Member.description"`)}
+	if _, ok := mc.mutation.Bio(); !ok {
+		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "Member.bio"`)}
 	}
-	if _, ok := mc.mutation.Headacount(); !ok {
-		return &ValidationError{Name: "headacount", err: errors.New(`ent: missing required field "Member.headacount"`)}
+	if _, ok := mc.mutation.PreferredRole(); !ok {
+		return &ValidationError{Name: "preferred_role", err: errors.New(`ent: missing required field "Member.preferred_role"`)}
 	}
 	return nil
 }
@@ -120,21 +124,25 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		_node = &Member{config: mc.config}
 		_spec = sqlgraph.NewCreateSpec(member.Table, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	)
-	if value, ok := mc.mutation.MemberID(); ok {
-		_spec.SetField(member.FieldMemberID, field.TypeInt64, value)
-		_node.MemberID = value
+	if value, ok := mc.mutation.Email(); ok {
+		_spec.SetField(member.FieldEmail, field.TypeString, value)
+		_node.Email = value
 	}
-	if value, ok := mc.mutation.Name(); ok {
-		_spec.SetField(member.FieldName, field.TypeString, value)
-		_node.Name = value
+	if value, ok := mc.mutation.Picture(); ok {
+		_spec.SetField(member.FieldPicture, field.TypeString, value)
+		_node.Picture = value
 	}
-	if value, ok := mc.mutation.Description(); ok {
-		_spec.SetField(member.FieldDescription, field.TypeString, value)
-		_node.Description = value
+	if value, ok := mc.mutation.Nickname(); ok {
+		_spec.SetField(member.FieldNickname, field.TypeString, value)
+		_node.Nickname = value
 	}
-	if value, ok := mc.mutation.Headacount(); ok {
-		_spec.SetField(member.FieldHeadacount, field.TypeInt8, value)
-		_node.Headacount = value
+	if value, ok := mc.mutation.Bio(); ok {
+		_spec.SetField(member.FieldBio, field.TypeString, value)
+		_node.Bio = value
+	}
+	if value, ok := mc.mutation.PreferredRole(); ok {
+		_spec.SetField(member.FieldPreferredRole, field.TypeString, value)
+		_node.PreferredRole = value
 	}
 	return _node, _spec
 }

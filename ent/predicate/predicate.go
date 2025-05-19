@@ -9,5 +9,8 @@ import (
 // Member is the predicate function for member builders.
 type Member func(*sql.Selector)
 
+// Position is the predicate function for position builders.
+type Position func(*sql.Selector)
+
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)

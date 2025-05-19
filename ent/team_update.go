@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"backend_golang/ent/position"
 	"backend_golang/ent/predicate"
 	"backend_golang/ent/team"
 	"context"
@@ -24,27 +25,6 @@ type TeamUpdate struct {
 // Where appends a list predicates to the TeamUpdate builder.
 func (tu *TeamUpdate) Where(ps ...predicate.Team) *TeamUpdate {
 	tu.mutation.Where(ps...)
-	return tu
-}
-
-// SetTeamID sets the "team_id" field.
-func (tu *TeamUpdate) SetTeamID(i int64) *TeamUpdate {
-	tu.mutation.ResetTeamID()
-	tu.mutation.SetTeamID(i)
-	return tu
-}
-
-// SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (tu *TeamUpdate) SetNillableTeamID(i *int64) *TeamUpdate {
-	if i != nil {
-		tu.SetTeamID(*i)
-	}
-	return tu
-}
-
-// AddTeamID adds i to the "team_id" field.
-func (tu *TeamUpdate) AddTeamID(i int64) *TeamUpdate {
-	tu.mutation.AddTeamID(i)
 	return tu
 }
 
@@ -97,9 +77,45 @@ func (tu *TeamUpdate) AddHeadcount(i int8) *TeamUpdate {
 	return tu
 }
 
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (tu *TeamUpdate) AddPositionIDs(ids ...int) *TeamUpdate {
+	tu.mutation.AddPositionIDs(ids...)
+	return tu
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (tu *TeamUpdate) AddPositions(p ...*Position) *TeamUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tu.AddPositionIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
+}
+
+// ClearPositions clears all "positions" edges to the Position entity.
+func (tu *TeamUpdate) ClearPositions() *TeamUpdate {
+	tu.mutation.ClearPositions()
+	return tu
+}
+
+// RemovePositionIDs removes the "positions" edge to Position entities by IDs.
+func (tu *TeamUpdate) RemovePositionIDs(ids ...int) *TeamUpdate {
+	tu.mutation.RemovePositionIDs(ids...)
+	return tu
+}
+
+// RemovePositions removes "positions" edges to Position entities.
+func (tu *TeamUpdate) RemovePositions(p ...*Position) *TeamUpdate {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tu.RemovePositionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -138,12 +154,6 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
-	if value, ok := tu.mutation.TeamID(); ok {
-		_spec.SetField(team.FieldTeamID, field.TypeInt64, value)
-	}
-	if value, ok := tu.mutation.AddedTeamID(); ok {
-		_spec.AddField(team.FieldTeamID, field.TypeInt64, value)
-	}
 	if value, ok := tu.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 	}
@@ -155,6 +165,51 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := tu.mutation.AddedHeadcount(); ok {
 		_spec.AddField(team.FieldHeadcount, field.TypeInt8, value)
+	}
+	if tu.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedPositionsIDs(); len(nodes) > 0 && !tu.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -174,27 +229,6 @@ type TeamUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *TeamMutation
-}
-
-// SetTeamID sets the "team_id" field.
-func (tuo *TeamUpdateOne) SetTeamID(i int64) *TeamUpdateOne {
-	tuo.mutation.ResetTeamID()
-	tuo.mutation.SetTeamID(i)
-	return tuo
-}
-
-// SetNillableTeamID sets the "team_id" field if the given value is not nil.
-func (tuo *TeamUpdateOne) SetNillableTeamID(i *int64) *TeamUpdateOne {
-	if i != nil {
-		tuo.SetTeamID(*i)
-	}
-	return tuo
-}
-
-// AddTeamID adds i to the "team_id" field.
-func (tuo *TeamUpdateOne) AddTeamID(i int64) *TeamUpdateOne {
-	tuo.mutation.AddTeamID(i)
-	return tuo
 }
 
 // SetName sets the "name" field.
@@ -246,9 +280,45 @@ func (tuo *TeamUpdateOne) AddHeadcount(i int8) *TeamUpdateOne {
 	return tuo
 }
 
+// AddPositionIDs adds the "positions" edge to the Position entity by IDs.
+func (tuo *TeamUpdateOne) AddPositionIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.AddPositionIDs(ids...)
+	return tuo
+}
+
+// AddPositions adds the "positions" edges to the Position entity.
+func (tuo *TeamUpdateOne) AddPositions(p ...*Position) *TeamUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tuo.AddPositionIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
+}
+
+// ClearPositions clears all "positions" edges to the Position entity.
+func (tuo *TeamUpdateOne) ClearPositions() *TeamUpdateOne {
+	tuo.mutation.ClearPositions()
+	return tuo
+}
+
+// RemovePositionIDs removes the "positions" edge to Position entities by IDs.
+func (tuo *TeamUpdateOne) RemovePositionIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.RemovePositionIDs(ids...)
+	return tuo
+}
+
+// RemovePositions removes "positions" edges to Position entities.
+func (tuo *TeamUpdateOne) RemovePositions(p ...*Position) *TeamUpdateOne {
+	ids := make([]int, len(p))
+	for i := range p {
+		ids[i] = p[i].ID
+	}
+	return tuo.RemovePositionIDs(ids...)
 }
 
 // Where appends a list predicates to the TeamUpdate builder.
@@ -317,12 +387,6 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 			}
 		}
 	}
-	if value, ok := tuo.mutation.TeamID(); ok {
-		_spec.SetField(team.FieldTeamID, field.TypeInt64, value)
-	}
-	if value, ok := tuo.mutation.AddedTeamID(); ok {
-		_spec.AddField(team.FieldTeamID, field.TypeInt64, value)
-	}
 	if value, ok := tuo.mutation.Name(); ok {
 		_spec.SetField(team.FieldName, field.TypeString, value)
 	}
@@ -334,6 +398,51 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	}
 	if value, ok := tuo.mutation.AddedHeadcount(); ok {
 		_spec.AddField(team.FieldHeadcount, field.TypeInt8, value)
+	}
+	if tuo.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedPositionsIDs(); len(nodes) > 0 && !tuo.mutation.PositionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.PositionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.PositionsTable,
+			Columns: []string{team.PositionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Team{config: tuo.config}
 	_spec.Assign = _node.assignValues

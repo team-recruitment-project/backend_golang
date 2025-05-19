@@ -11,10 +11,11 @@ var (
 	// MembersColumns holds the columns for the "members" table.
 	MembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "member_id", Type: field.TypeInt64},
-		{Name: "name", Type: field.TypeString},
-		{Name: "description", Type: field.TypeString, Size: 2147483647},
-		{Name: "headacount", Type: field.TypeInt8},
+		{Name: "email", Type: field.TypeString},
+		{Name: "picture", Type: field.TypeString},
+		{Name: "nickname", Type: field.TypeString},
+		{Name: "bio", Type: field.TypeString, Size: 2147483647},
+		{Name: "preferred_role", Type: field.TypeString},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
@@ -22,10 +23,30 @@ var (
 		Columns:    MembersColumns,
 		PrimaryKey: []*schema.Column{MembersColumns[0]},
 	}
+	// PositionsColumns holds the columns for the "positions" table.
+	PositionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "role", Type: field.TypeString},
+		{Name: "vacancy", Type: field.TypeInt8},
+		{Name: "team_positions", Type: field.TypeInt, Nullable: true},
+	}
+	// PositionsTable holds the schema information for the "positions" table.
+	PositionsTable = &schema.Table{
+		Name:       "positions",
+		Columns:    PositionsColumns,
+		PrimaryKey: []*schema.Column{PositionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "positions_teams_positions",
+				Columns:    []*schema.Column{PositionsColumns[3]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "team_id", Type: field.TypeInt64},
 		{Name: "name", Type: field.TypeString},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
 		{Name: "headcount", Type: field.TypeInt8},
@@ -39,9 +60,11 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		MembersTable,
+		PositionsTable,
 		TeamsTable,
 	}
 )
 
 func init() {
+	PositionsTable.ForeignKeys[0].RefTable = TeamsTable
 }

@@ -4,6 +4,7 @@ package team
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -11,22 +12,28 @@ const (
 	Label = "team"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldTeamID holds the string denoting the team_id field in the database.
-	FieldTeamID = "team_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldDescription holds the string denoting the description field in the database.
 	FieldDescription = "description"
 	// FieldHeadcount holds the string denoting the headcount field in the database.
 	FieldHeadcount = "headcount"
+	// EdgePositions holds the string denoting the positions edge name in mutations.
+	EdgePositions = "positions"
 	// Table holds the table name of the team in the database.
 	Table = "teams"
+	// PositionsTable is the table that holds the positions relation/edge.
+	PositionsTable = "positions"
+	// PositionsInverseTable is the table name for the Position entity.
+	// It exists in this package in order to avoid circular dependency with the "position" package.
+	PositionsInverseTable = "positions"
+	// PositionsColumn is the table column denoting the positions relation/edge.
+	PositionsColumn = "team_positions"
 )
 
 // Columns holds all SQL columns for team fields.
 var Columns = []string{
 	FieldID,
-	FieldTeamID,
 	FieldName,
 	FieldDescription,
 	FieldHeadcount,
@@ -50,11 +57,6 @@ func ByID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldID, opts...).ToFunc()
 }
 
-// ByTeamID orders the results by the team_id field.
-func ByTeamID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldTeamID, opts...).ToFunc()
-}
-
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
@@ -68,4 +70,25 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByHeadcount orders the results by the headcount field.
 func ByHeadcount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHeadcount, opts...).ToFunc()
+}
+
+// ByPositionsCount orders the results by positions count.
+func ByPositionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newPositionsStep(), opts...)
+	}
+}
+
+// ByPositions orders the results by positions terms.
+func ByPositions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newPositionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newPositionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(PositionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PositionsTable, PositionsColumn),
+	)
 }

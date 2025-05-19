@@ -16,15 +16,34 @@ type Team struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
-	// TeamID holds the value of the "team_id" field.
-	TeamID int64 `json:"team_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// Description holds the value of the "description" field.
 	Description string `json:"description,omitempty"`
 	// Headcount holds the value of the "headcount" field.
-	Headcount    int8 `json:"headcount,omitempty"`
+	Headcount int8 `json:"headcount,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TeamQuery when eager-loading is set.
+	Edges        TeamEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// TeamEdges holds the relations/edges for other nodes in the graph.
+type TeamEdges struct {
+	// Positions holds the value of the positions edge.
+	Positions []*Position `json:"positions,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// PositionsOrErr returns the Positions value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) PositionsOrErr() ([]*Position, error) {
+	if e.loadedTypes[0] {
+		return e.Positions, nil
+	}
+	return nil, &NotLoadedError{edge: "positions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -32,7 +51,7 @@ func (*Team) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case team.FieldID, team.FieldTeamID, team.FieldHeadcount:
+		case team.FieldID, team.FieldHeadcount:
 			values[i] = new(sql.NullInt64)
 		case team.FieldName, team.FieldDescription:
 			values[i] = new(sql.NullString)
@@ -57,12 +76,6 @@ func (t *Team) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			t.ID = int(value.Int64)
-		case team.FieldTeamID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field team_id", values[i])
-			} else if value.Valid {
-				t.TeamID = value.Int64
-			}
 		case team.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
@@ -94,6 +107,11 @@ func (t *Team) Value(name string) (ent.Value, error) {
 	return t.selectValues.Get(name)
 }
 
+// QueryPositions queries the "positions" edge of the Team entity.
+func (t *Team) QueryPositions() *PositionQuery {
+	return NewTeamClient(t.config).QueryPositions(t)
+}
+
 // Update returns a builder for updating this Team.
 // Note that you need to call Team.Unwrap() before calling this method if this Team
 // was returned from a transaction, and the transaction was committed or rolled back.
@@ -117,9 +135,6 @@ func (t *Team) String() string {
 	var builder strings.Builder
 	builder.WriteString("Team(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", t.ID))
-	builder.WriteString("team_id=")
-	builder.WriteString(fmt.Sprintf("%v", t.TeamID))
-	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(t.Name)
 	builder.WriteString(", ")

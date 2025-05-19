@@ -6,6 +6,7 @@ import (
 	"backend_golang/ent/predicate"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 // ID filters vertices based on their ID field.
@@ -53,11 +54,6 @@ func IDLTE(id int) predicate.Team {
 	return predicate.Team(sql.FieldLTE(FieldID, id))
 }
 
-// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
-func TeamID(v int64) predicate.Team {
-	return predicate.Team(sql.FieldEQ(FieldTeamID, v))
-}
-
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Team {
 	return predicate.Team(sql.FieldEQ(FieldName, v))
@@ -71,46 +67,6 @@ func Description(v string) predicate.Team {
 // Headcount applies equality check predicate on the "headcount" field. It's identical to HeadcountEQ.
 func Headcount(v int8) predicate.Team {
 	return predicate.Team(sql.FieldEQ(FieldHeadcount, v))
-}
-
-// TeamIDEQ applies the EQ predicate on the "team_id" field.
-func TeamIDEQ(v int64) predicate.Team {
-	return predicate.Team(sql.FieldEQ(FieldTeamID, v))
-}
-
-// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
-func TeamIDNEQ(v int64) predicate.Team {
-	return predicate.Team(sql.FieldNEQ(FieldTeamID, v))
-}
-
-// TeamIDIn applies the In predicate on the "team_id" field.
-func TeamIDIn(vs ...int64) predicate.Team {
-	return predicate.Team(sql.FieldIn(FieldTeamID, vs...))
-}
-
-// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
-func TeamIDNotIn(vs ...int64) predicate.Team {
-	return predicate.Team(sql.FieldNotIn(FieldTeamID, vs...))
-}
-
-// TeamIDGT applies the GT predicate on the "team_id" field.
-func TeamIDGT(v int64) predicate.Team {
-	return predicate.Team(sql.FieldGT(FieldTeamID, v))
-}
-
-// TeamIDGTE applies the GTE predicate on the "team_id" field.
-func TeamIDGTE(v int64) predicate.Team {
-	return predicate.Team(sql.FieldGTE(FieldTeamID, v))
-}
-
-// TeamIDLT applies the LT predicate on the "team_id" field.
-func TeamIDLT(v int64) predicate.Team {
-	return predicate.Team(sql.FieldLT(FieldTeamID, v))
-}
-
-// TeamIDLTE applies the LTE predicate on the "team_id" field.
-func TeamIDLTE(v int64) predicate.Team {
-	return predicate.Team(sql.FieldLTE(FieldTeamID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -281,6 +237,29 @@ func HeadcountLT(v int8) predicate.Team {
 // HeadcountLTE applies the LTE predicate on the "headcount" field.
 func HeadcountLTE(v int8) predicate.Team {
 	return predicate.Team(sql.FieldLTE(FieldHeadcount, v))
+}
+
+// HasPositions applies the HasEdge predicate on the "positions" edge.
+func HasPositions() predicate.Team {
+	return predicate.Team(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, PositionsTable, PositionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasPositionsWith applies the HasEdge predicate on the "positions" edge with a given conditions (other predicates).
+func HasPositionsWith(preds ...predicate.Position) predicate.Team {
+	return predicate.Team(func(s *sql.Selector) {
+		step := newPositionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
 }
 
 // And groups predicates with the AND operator between them.
