@@ -20,6 +20,20 @@ type PositionCreate struct {
 	hooks    []Hook
 }
 
+// SetTeamID sets the "team_id" field.
+func (pc *PositionCreate) SetTeamID(i int) *PositionCreate {
+	pc.mutation.SetTeamID(i)
+	return pc
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (pc *PositionCreate) SetNillableTeamID(i *int) *PositionCreate {
+	if i != nil {
+		pc.SetTeamID(*i)
+	}
+	return pc
+}
+
 // SetRole sets the "role" field.
 func (pc *PositionCreate) SetRole(s string) *PositionCreate {
 	pc.mutation.SetRole(s)
@@ -29,20 +43,6 @@ func (pc *PositionCreate) SetRole(s string) *PositionCreate {
 // SetVacancy sets the "vacancy" field.
 func (pc *PositionCreate) SetVacancy(i int8) *PositionCreate {
 	pc.mutation.SetVacancy(i)
-	return pc
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (pc *PositionCreate) SetTeamID(id int) *PositionCreate {
-	pc.mutation.SetTeamID(id)
-	return pc
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (pc *PositionCreate) SetNillableTeamID(id *int) *PositionCreate {
-	if id != nil {
-		pc = pc.SetTeamID(*id)
-	}
 	return pc
 }
 
@@ -139,7 +139,7 @@ func (pc *PositionCreate) createSpec() (*Position, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.team_positions = &nodes[0]
+		_node.TeamID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -28,7 +28,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "position" package.
 	PositionsInverseTable = "positions"
 	// PositionsColumn is the table column denoting the positions relation/edge.
-	PositionsColumn = "team_positions"
+	PositionsColumn = "team_id"
 )
 
 // Columns holds all SQL columns for team fields.

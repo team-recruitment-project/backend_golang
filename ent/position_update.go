@@ -28,6 +28,26 @@ func (pu *PositionUpdate) Where(ps ...predicate.Position) *PositionUpdate {
 	return pu
 }
 
+// SetTeamID sets the "team_id" field.
+func (pu *PositionUpdate) SetTeamID(i int) *PositionUpdate {
+	pu.mutation.SetTeamID(i)
+	return pu
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (pu *PositionUpdate) SetNillableTeamID(i *int) *PositionUpdate {
+	if i != nil {
+		pu.SetTeamID(*i)
+	}
+	return pu
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (pu *PositionUpdate) ClearTeamID() *PositionUpdate {
+	pu.mutation.ClearTeamID()
+	return pu
+}
+
 // SetRole sets the "role" field.
 func (pu *PositionUpdate) SetRole(s string) *PositionUpdate {
 	pu.mutation.SetRole(s)
@@ -60,20 +80,6 @@ func (pu *PositionUpdate) SetNillableVacancy(i *int8) *PositionUpdate {
 // AddVacancy adds i to the "vacancy" field.
 func (pu *PositionUpdate) AddVacancy(i int8) *PositionUpdate {
 	pu.mutation.AddVacancy(i)
-	return pu
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (pu *PositionUpdate) SetTeamID(id int) *PositionUpdate {
-	pu.mutation.SetTeamID(id)
-	return pu
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (pu *PositionUpdate) SetNillableTeamID(id *int) *PositionUpdate {
-	if id != nil {
-		pu = pu.SetTeamID(*id)
-	}
 	return pu
 }
 
@@ -187,6 +193,26 @@ type PositionUpdateOne struct {
 	mutation *PositionMutation
 }
 
+// SetTeamID sets the "team_id" field.
+func (puo *PositionUpdateOne) SetTeamID(i int) *PositionUpdateOne {
+	puo.mutation.SetTeamID(i)
+	return puo
+}
+
+// SetNillableTeamID sets the "team_id" field if the given value is not nil.
+func (puo *PositionUpdateOne) SetNillableTeamID(i *int) *PositionUpdateOne {
+	if i != nil {
+		puo.SetTeamID(*i)
+	}
+	return puo
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (puo *PositionUpdateOne) ClearTeamID() *PositionUpdateOne {
+	puo.mutation.ClearTeamID()
+	return puo
+}
+
 // SetRole sets the "role" field.
 func (puo *PositionUpdateOne) SetRole(s string) *PositionUpdateOne {
 	puo.mutation.SetRole(s)
@@ -219,20 +245,6 @@ func (puo *PositionUpdateOne) SetNillableVacancy(i *int8) *PositionUpdateOne {
 // AddVacancy adds i to the "vacancy" field.
 func (puo *PositionUpdateOne) AddVacancy(i int8) *PositionUpdateOne {
 	puo.mutation.AddVacancy(i)
-	return puo
-}
-
-// SetTeamID sets the "team" edge to the Team entity by ID.
-func (puo *PositionUpdateOne) SetTeamID(id int) *PositionUpdateOne {
-	puo.mutation.SetTeamID(id)
-	return puo
-}
-
-// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
-func (puo *PositionUpdateOne) SetNillableTeamID(id *int) *PositionUpdateOne {
-	if id != nil {
-		puo = puo.SetTeamID(*id)
-	}
 	return puo
 }
 

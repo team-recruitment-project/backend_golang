@@ -15,6 +15,7 @@ type Position struct {
 func (Position) Fields() []ent.Field {
 	return []ent.Field{
 		// field.Int64("position_id"),
+		field.Int("team_id").Optional(),
 		field.String("role"),
 		field.Int8("vacancy"),
 	}
@@ -25,6 +26,7 @@ func (Position) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("team", Team.Type).
 			Ref("positions").
-			Unique(),
+			Unique().
+			Field("team_id"),
 	}
 }

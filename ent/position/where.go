@@ -54,6 +54,11 @@ func IDLTE(id int) predicate.Position {
 	return predicate.Position(sql.FieldLTE(FieldID, id))
 }
 
+// TeamID applies equality check predicate on the "team_id" field. It's identical to TeamIDEQ.
+func TeamID(v int) predicate.Position {
+	return predicate.Position(sql.FieldEQ(FieldTeamID, v))
+}
+
 // Role applies equality check predicate on the "role" field. It's identical to RoleEQ.
 func Role(v string) predicate.Position {
 	return predicate.Position(sql.FieldEQ(FieldRole, v))
@@ -62,6 +67,36 @@ func Role(v string) predicate.Position {
 // Vacancy applies equality check predicate on the "vacancy" field. It's identical to VacancyEQ.
 func Vacancy(v int8) predicate.Position {
 	return predicate.Position(sql.FieldEQ(FieldVacancy, v))
+}
+
+// TeamIDEQ applies the EQ predicate on the "team_id" field.
+func TeamIDEQ(v int) predicate.Position {
+	return predicate.Position(sql.FieldEQ(FieldTeamID, v))
+}
+
+// TeamIDNEQ applies the NEQ predicate on the "team_id" field.
+func TeamIDNEQ(v int) predicate.Position {
+	return predicate.Position(sql.FieldNEQ(FieldTeamID, v))
+}
+
+// TeamIDIn applies the In predicate on the "team_id" field.
+func TeamIDIn(vs ...int) predicate.Position {
+	return predicate.Position(sql.FieldIn(FieldTeamID, vs...))
+}
+
+// TeamIDNotIn applies the NotIn predicate on the "team_id" field.
+func TeamIDNotIn(vs ...int) predicate.Position {
+	return predicate.Position(sql.FieldNotIn(FieldTeamID, vs...))
+}
+
+// TeamIDIsNil applies the IsNil predicate on the "team_id" field.
+func TeamIDIsNil() predicate.Position {
+	return predicate.Position(sql.FieldIsNull(FieldTeamID))
+}
+
+// TeamIDNotNil applies the NotNil predicate on the "team_id" field.
+func TeamIDNotNil() predicate.Position {
+	return predicate.Position(sql.FieldNotNull(FieldTeamID))
 }
 
 // RoleEQ applies the EQ predicate on the "role" field.

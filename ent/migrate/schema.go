@@ -28,7 +28,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "role", Type: field.TypeString},
 		{Name: "vacancy", Type: field.TypeInt8},
-		{Name: "team_positions", Type: field.TypeInt, Nullable: true},
+		{Name: "team_id", Type: field.TypeInt, Nullable: true},
 	}
 	// PositionsTable holds the schema information for the "positions" table.
 	PositionsTable = &schema.Table{

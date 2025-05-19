@@ -24,7 +24,6 @@ type PositionQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Position
 	withTeam   *TeamQuery
-	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -299,12 +298,12 @@ func (pq *PositionQuery) WithTeam(opts ...func(*TeamQuery)) *PositionQuery {
 // Example:
 //
 //	var v []struct {
-//		Role string `json:"role,omitempty"`
+//		TeamID int `json:"team_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
 //	client.Position.Query().
-//		GroupBy(position.FieldRole).
+//		GroupBy(position.FieldTeamID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
 func (pq *PositionQuery) GroupBy(field string, fields ...string) *PositionGroupBy {
@@ -322,11 +321,11 @@ func (pq *PositionQuery) GroupBy(field string, fields ...string) *PositionGroupB
 // Example:
 //
 //	var v []struct {
-//		Role string `json:"role,omitempty"`
+//		TeamID int `json:"team_id,omitempty"`
 //	}
 //
 //	client.Position.Query().
-//		Select(position.FieldRole).
+//		Select(position.FieldTeamID).
 //		Scan(ctx, &v)
 func (pq *PositionQuery) Select(fields ...string) *PositionSelect {
 	pq.ctx.Fields = append(pq.ctx.Fields, fields...)
@@ -370,18 +369,11 @@ func (pq *PositionQuery) prepareQuery(ctx context.Context) error {
 func (pq *PositionQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Position, error) {
 	var (
 		nodes       = []*Position{}
-		withFKs     = pq.withFKs
 		_spec       = pq.querySpec()
 		loadedTypes = [1]bool{
 			pq.withTeam != nil,
 		}
 	)
-	if pq.withTeam != nil {
-		withFKs = true
-	}
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, position.ForeignKeys...)
-	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Position).scanValues(nil, columns)
 	}
@@ -413,10 +405,7 @@ func (pq *PositionQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes [
 	ids := make([]int, 0, len(nodes))
 	nodeids := make(map[int][]*Position)
 	for i := range nodes {
-		if nodes[i].team_positions == nil {
-			continue
-		}
-		fk := *nodes[i].team_positions
+		fk := nodes[i].TeamID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -433,7 +422,7 @@ func (pq *PositionQuery) loadTeam(ctx context.Context, query *TeamQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "team_positions" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "team_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -466,6 +455,9 @@ func (pq *PositionQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != position.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if pq.withTeam != nil {
+			_spec.Node.AddColumnOnce(position.FieldTeamID)
 		}
 	}
 	if ps := pq.predicates; len(ps) > 0 {

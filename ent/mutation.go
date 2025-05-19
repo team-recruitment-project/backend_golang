@@ -687,6 +687,55 @@ func (m *PositionMutation) IDs(ctx context.Context) ([]int, error) {
 	}
 }
 
+// SetTeamID sets the "team_id" field.
+func (m *PositionMutation) SetTeamID(i int) {
+	m.team = &i
+}
+
+// TeamID returns the value of the "team_id" field in the mutation.
+func (m *PositionMutation) TeamID() (r int, exists bool) {
+	v := m.team
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTeamID returns the old "team_id" field's value of the Position entity.
+// If the Position object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *PositionMutation) OldTeamID(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTeamID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTeamID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTeamID: %w", err)
+	}
+	return oldValue.TeamID, nil
+}
+
+// ClearTeamID clears the value of the "team_id" field.
+func (m *PositionMutation) ClearTeamID() {
+	m.team = nil
+	m.clearedFields[position.FieldTeamID] = struct{}{}
+}
+
+// TeamIDCleared returns if the "team_id" field was cleared in this mutation.
+func (m *PositionMutation) TeamIDCleared() bool {
+	_, ok := m.clearedFields[position.FieldTeamID]
+	return ok
+}
+
+// ResetTeamID resets all changes to the "team_id" field.
+func (m *PositionMutation) ResetTeamID() {
+	m.team = nil
+	delete(m.clearedFields, position.FieldTeamID)
+}
+
 // SetRole sets the "role" field.
 func (m *PositionMutation) SetRole(s string) {
 	m.role = &s
@@ -779,27 +828,15 @@ func (m *PositionMutation) ResetVacancy() {
 	m.addvacancy = nil
 }
 
-// SetTeamID sets the "team" edge to the Team entity by id.
-func (m *PositionMutation) SetTeamID(id int) {
-	m.team = &id
-}
-
 // ClearTeam clears the "team" edge to the Team entity.
 func (m *PositionMutation) ClearTeam() {
 	m.clearedteam = true
+	m.clearedFields[position.FieldTeamID] = struct{}{}
 }
 
 // TeamCleared reports if the "team" edge to the Team entity was cleared.
 func (m *PositionMutation) TeamCleared() bool {
-	return m.clearedteam
-}
-
-// TeamID returns the "team" edge ID in the mutation.
-func (m *PositionMutation) TeamID() (id int, exists bool) {
-	if m.team != nil {
-		return *m.team, true
-	}
-	return
+	return m.TeamIDCleared() || m.clearedteam
 }
 
 // TeamIDs returns the "team" edge IDs in the mutation.
@@ -852,7 +889,10 @@ func (m *PositionMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *PositionMutation) Fields() []string {
-	fields := make([]string, 0, 2)
+	fields := make([]string, 0, 3)
+	if m.team != nil {
+		fields = append(fields, position.FieldTeamID)
+	}
 	if m.role != nil {
 		fields = append(fields, position.FieldRole)
 	}
@@ -867,6 +907,8 @@ func (m *PositionMutation) Fields() []string {
 // schema.
 func (m *PositionMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case position.FieldTeamID:
+		return m.TeamID()
 	case position.FieldRole:
 		return m.Role()
 	case position.FieldVacancy:
@@ -880,6 +922,8 @@ func (m *PositionMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *PositionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case position.FieldTeamID:
+		return m.OldTeamID(ctx)
 	case position.FieldRole:
 		return m.OldRole(ctx)
 	case position.FieldVacancy:
@@ -893,6 +937,13 @@ func (m *PositionMutation) OldField(ctx context.Context, name string) (ent.Value
 // type.
 func (m *PositionMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case position.FieldTeamID:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTeamID(v)
+		return nil
 	case position.FieldRole:
 		v, ok := value.(string)
 		if !ok {
@@ -951,7 +1002,11 @@ func (m *PositionMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *PositionMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(position.FieldTeamID) {
+		fields = append(fields, position.FieldTeamID)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -964,6 +1019,11 @@ func (m *PositionMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *PositionMutation) ClearField(name string) error {
+	switch name {
+	case position.FieldTeamID:
+		m.ClearTeamID()
+		return nil
+	}
 	return fmt.Errorf("unknown Position nullable field %s", name)
 }
 
@@ -971,6 +1031,9 @@ func (m *PositionMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *PositionMutation) ResetField(name string) error {
 	switch name {
+	case position.FieldTeamID:
+		m.ResetTeamID()
+		return nil
 	case position.FieldRole:
 		m.ResetRole()
 		return nil

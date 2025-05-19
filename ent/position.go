@@ -17,15 +17,16 @@ type Position struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
+	// TeamID holds the value of the "team_id" field.
+	TeamID int `json:"team_id,omitempty"`
 	// Role holds the value of the "role" field.
 	Role string `json:"role,omitempty"`
 	// Vacancy holds the value of the "vacancy" field.
 	Vacancy int8 `json:"vacancy,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the PositionQuery when eager-loading is set.
-	Edges          PositionEdges `json:"edges"`
-	team_positions *int
-	selectValues   sql.SelectValues
+	Edges        PositionEdges `json:"edges"`
+	selectValues sql.SelectValues
 }
 
 // PositionEdges holds the relations/edges for other nodes in the graph.
@@ -53,12 +54,10 @@ func (*Position) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case position.FieldID, position.FieldVacancy:
+		case position.FieldID, position.FieldTeamID, position.FieldVacancy:
 			values[i] = new(sql.NullInt64)
 		case position.FieldRole:
 			values[i] = new(sql.NullString)
-		case position.ForeignKeys[0]: // team_positions
-			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -80,6 +79,12 @@ func (po *Position) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field id", value)
 			}
 			po.ID = int(value.Int64)
+		case position.FieldTeamID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field team_id", values[i])
+			} else if value.Valid {
+				po.TeamID = int(value.Int64)
+			}
 		case position.FieldRole:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field role", values[i])
@@ -91,13 +96,6 @@ func (po *Position) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field vacancy", values[i])
 			} else if value.Valid {
 				po.Vacancy = int8(value.Int64)
-			}
-		case position.ForeignKeys[0]:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for edge-field team_positions", value)
-			} else if value.Valid {
-				po.team_positions = new(int)
-				*po.team_positions = int(value.Int64)
 			}
 		default:
 			po.selectValues.Set(columns[i], values[i])
@@ -140,6 +138,9 @@ func (po *Position) String() string {
 	var builder strings.Builder
 	builder.WriteString("Position(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", po.ID))
+	builder.WriteString("team_id=")
+	builder.WriteString(fmt.Sprintf("%v", po.TeamID))
+	builder.WriteString(", ")
 	builder.WriteString("role=")
 	builder.WriteString(po.Role)
 	builder.WriteString(", ")

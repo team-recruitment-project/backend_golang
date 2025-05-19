@@ -413,7 +413,9 @@ func (tq *TeamQuery) loadPositions(ctx context.Context, query *PositionQuery, no
 			init(nodes[i])
 		}
 	}
-	query.withFKs = true
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(position.FieldTeamID)
+	}
 	query.Where(predicate.Position(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(team.PositionsColumn), fks...))
 	}))
@@ -422,13 +424,10 @@ func (tq *TeamQuery) loadPositions(ctx context.Context, query *PositionQuery, no
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.team_positions
-		if fk == nil {
-			return fmt.Errorf(`foreign-key "team_positions" is nil for node %v`, n.ID)
-		}
-		node, ok := nodeids[*fk]
+		fk := n.TeamID
+		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "team_positions" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
