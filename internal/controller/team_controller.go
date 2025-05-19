@@ -1,9 +1,10 @@
 package controller
 
 import (
+	"backend_golang/internal/controller/request"
 	"backend_golang/internal/models"
-	"backend_golang/internal/request"
-	"log"
+	"backend_golang/internal/service"
+	smodels "backend_golang/internal/service/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -15,10 +16,11 @@ type TeamController interface {
 }
 
 type teamController struct {
+	teamService service.TeamService
 }
 
-func NewTeamController() TeamController {
-	return &teamController{}
+func NewTeamController(teamService service.TeamService) TeamController {
+	return &teamController{teamService: teamService}
 }
 
 func (t *teamController) MakeTeam(c *gin.Context) {
@@ -28,7 +30,6 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 		return
 	}
 
-	// Validate request
 	if err := req.Validate(); err != nil {
 		validationErrors := make([]models.ValidationError, 0)
 		for _, err := range err.(validator.ValidationErrors) {
@@ -40,5 +41,10 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 		return
 	}
 
-	log.Println(req)
+	t.teamService.Create(smodels.CreateTeam{
+		TeamName:    req.TeamName,
+		Description: req.Description,
+		Headcount:   req.Headcount,
+		Vacancies:   req.Vacancies,
+	})
 }
