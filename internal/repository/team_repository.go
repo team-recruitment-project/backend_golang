@@ -7,7 +7,7 @@ import (
 	"backend_golang/internal/domain"
 	"backend_golang/internal/service/models"
 	"context"
-	"log"
+	"fmt"
 )
 
 type TeamRepository interface {
@@ -18,75 +18,91 @@ type TeamRepository interface {
 
 type teamRepository struct {
 	client *ent.Client
+	tx     *TransactionManager
 }
 
 func NewTeamRepository(client *ent.Client) TeamRepository {
 	return &teamRepository{
 		client: client,
+		tx:     NewTransactionManager(client),
 	}
 }
 
 func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error) {
-	positions := []*ent.Position{}
+	// Validate input
+	if createTeam.TeamName == "" {
+		return nil, fmt.Errorf("team name cannot be empty")
+	}
 	for _, vacancy := range createTeam.Vacancies {
-		savedPosition, err := t.client.Position.Create().
-			SetRole(string(vacancy.Role)).
-			SetVacancy(vacancy.Vacancy).
+		if vacancy.Role == "" {
+			return nil, fmt.Errorf("role cannot be empty")
+		}
+	}
+
+	var result *domain.Team
+	err := t.tx.WithTx(ctx, func(tx *ent.Tx) error {
+		positions := []*ent.Position{}
+		for _, vacancy := range createTeam.Vacancies {
+			savedPosition, err := tx.Position.Create().
+				SetRole(string(vacancy.Role)).
+				SetVacancy(vacancy.Vacancy).
+				Save(ctx)
+			if err != nil {
+				return err
+			}
+			positions = append(positions, savedPosition)
+		}
+
+		team, err := tx.Team.Create().
+			SetName(createTeam.TeamName).
+			SetDescription(createTeam.Description).
+			SetHeadcount(createTeam.Headcount).
+			AddPositions(positions...).
 			Save(ctx)
 		if err != nil {
-			log.Println("error", err)
-			return nil, err
+			return err
 		}
-		positions = append(positions, savedPosition)
-	}
-	log.Println("positions", positions)
 
-	team, err := t.client.Team.Create().
-		SetName(createTeam.TeamName).
-		SetDescription(createTeam.Description).
-		SetHeadcount(createTeam.Headcount).
-		AddPositions(positions...).
-		Save(ctx)
+		positionIDs := make([]int, len(team.Edges.Positions))
+		for i, position := range team.Edges.Positions {
+			positionIDs[i] = position.ID
+		}
+
+		result = &domain.Team{
+			ID:          team.ID,
+			Name:        team.Name,
+			Description: team.Description,
+			Headcount:   team.Headcount,
+			Positions:   positionIDs,
+		}
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	log.Println("test", team)
-
-	positionIDs := []int{}
-	for i, position := range team.Edges.Positions {
-		positionIDs[i] = position.ID
-	}
-
-	domain := &domain.Team{
-		ID:          team.ID,
-		Name:        team.Name,
-		Description: team.Description,
-		Headcount:   team.Headcount,
-		Positions:   positionIDs,
-	}
-	return domain, nil
+	return result, nil
 }
 
 func (t *teamRepository) DeleteTeam(ctx context.Context, teamID int) error {
-	// First, delete all positions associated with the team
-	_, err := t.client.Position.Delete().Where(
-		position.HasTeamWith(team.ID(teamID)),
-	).Exec(ctx)
-	if err != nil {
-		return err
-	}
+	return t.tx.WithTx(ctx, func(tx *ent.Tx) error {
+		// First, delete all positions associated with the team
+		_, err := tx.Position.Delete().Where(
+			position.HasTeamWith(team.ID(teamID)),
+		).Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	// Then delete the team
-	err = t.client.Team.DeleteOneID(teamID).Exec(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+		// Then delete the team
+		err = tx.Team.DeleteOneID(teamID).Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func (t *teamRepository) FindByID(ctx context.Context, teamID int) error {
-	// TODO ent.Team 을 반환할지 domain.Team 을 반환할지 고민
 	_, err := t.client.Team.Query().Where(team.ID(teamID)).First(ctx)
 	if err != nil {
 		return err

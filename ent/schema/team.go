@@ -14,7 +14,7 @@ type Team struct {
 // Fields of the Team.
 func (Team) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("name"),
+		field.String("name").Unique(),
 		field.Text("description"),
 		field.Int8("headcount"),
 	}
