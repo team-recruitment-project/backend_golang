@@ -18,3 +18,20 @@ go run -mod=mod entgo.io/ent/cmd/ent new [SchemaName]
 ```shell
 go generate ./ent
 ```
+
+## アプリケーション
+**起動**
+```shell
+go run ./cmd/teamrecruitment/main.go  
+```
+
+**全体テスト**
+```shell
+go test ./... -v
+```
+
+## API 明細書
+
+```text
+/api/openapi.yaml
+```
