@@ -6,6 +6,7 @@ import (
 	"backend_golang/internal/service"
 	smodels "backend_golang/internal/service/models"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -13,6 +14,7 @@ import (
 
 type TeamController interface {
 	MakeTeam(c *gin.Context)
+	DeleteTeam(c *gin.Context)
 }
 
 type teamController struct {
@@ -51,4 +53,14 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+}
+
+func (t *teamController) DeleteTeam(c *gin.Context) {
+	teamID, err := strconv.Atoi(c.Param("teamID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	t.teamService.Delete(c, teamID)
 }

@@ -8,6 +8,7 @@ import (
 
 type TeamService interface {
 	Create(ctx context.Context, createTeam models.CreateTeam) error
+	Delete(ctx context.Context, teamID int) error
 }
 
 type teamService struct {
@@ -25,5 +26,18 @@ func (t *teamService) Create(ctx context.Context, createTeam models.CreateTeam) 
 		return err
 	}
 
+	return nil
+}
+
+func (t *teamService) Delete(ctx context.Context, teamID int) error {
+	err := t.teamRepository.FindByID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+
+	err = t.teamRepository.DeleteTeam(ctx, teamID)
+	if err != nil {
+		return err
+	}
 	return nil
 }
