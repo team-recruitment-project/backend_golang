@@ -7,7 +7,7 @@ import (
 )
 
 type TeamService interface {
-	Create(ctx context.Context, createTeam models.CreateTeam) error
+	Create(ctx context.Context, createTeam models.CreateTeam) (int, error)
 	Delete(ctx context.Context, teamID int) error
 }
 
@@ -19,14 +19,13 @@ func NewTeamService(teamRepository repository.TeamRepository) TeamService {
 	return &teamService{teamRepository: teamRepository}
 }
 
-func (t *teamService) Create(ctx context.Context, createTeam models.CreateTeam) error {
-
-	err := t.teamRepository.CreateTeam(ctx, createTeam)
+func (t *teamService) Create(ctx context.Context, createTeam models.CreateTeam) (int, error) {
+	team, err := t.teamRepository.CreateTeam(ctx, createTeam)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return team.ID, nil
 }
 
 func (t *teamService) Delete(ctx context.Context, teamID int) error {

@@ -44,16 +44,19 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 		return
 	}
 
-	if err := t.teamService.Create(c,
+	teamID, err := t.teamService.Create(c,
 		smodels.CreateTeam{
 			TeamName:    req.TeamName,
 			Description: req.Description,
 			Headcount:   req.Headcount,
 			Vacancies:   req.Vacancies,
-		}); err != nil {
+		})
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	c.JSON(http.StatusCreated, gin.H{"teamID": teamID})
 }
 
 func (t *teamController) DeleteTeam(c *gin.Context) {

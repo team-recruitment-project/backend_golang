@@ -4,13 +4,14 @@ import (
 	"backend_golang/ent"
 	"backend_golang/ent/position"
 	"backend_golang/ent/team"
+	"backend_golang/internal/domain"
 	"backend_golang/internal/service/models"
 	"context"
 	"log"
 )
 
 type TeamRepository interface {
-	CreateTeam(ctx context.Context, createTeam models.CreateTeam) error
+	CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error)
 	DeleteTeam(ctx context.Context, teamID int) error
 	FindByID(ctx context.Context, teamID int) error
 }
@@ -25,7 +26,7 @@ func NewTeamRepository(client *ent.Client) TeamRepository {
 	}
 }
 
-func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) error {
+func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error) {
 	positions := []*ent.Position{}
 	for _, vacancy := range createTeam.Vacancies {
 		savedPosition, err := t.client.Position.Create().
@@ -34,19 +35,37 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			Save(ctx)
 		if err != nil {
 			log.Println("error", err)
-			return err
+			return nil, err
 		}
 		positions = append(positions, savedPosition)
 	}
 	log.Println("positions", positions)
 
-	t.client.Team.Create().
+	team, err := t.client.Team.Create().
 		SetName(createTeam.TeamName).
 		SetDescription(createTeam.Description).
 		SetHeadcount(createTeam.Headcount).
 		AddPositions(positions...).
 		Save(ctx)
-	return nil
+	if err != nil {
+		return nil, err
+	}
+
+	log.Println("test", team)
+
+	positionIDs := []int{}
+	for i, position := range team.Edges.Positions {
+		positionIDs[i] = position.ID
+	}
+
+	domain := &domain.Team{
+		ID:          team.ID,
+		Name:        team.Name,
+		Description: team.Description,
+		Headcount:   team.Headcount,
+		Positions:   positionIDs,
+	}
+	return domain, nil
 }
 
 func (t *teamRepository) DeleteTeam(ctx context.Context, teamID int) error {
