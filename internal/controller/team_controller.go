@@ -5,6 +5,7 @@ import (
 	"backend_golang/internal/models"
 	"backend_golang/internal/service"
 	smodels "backend_golang/internal/service/models"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -56,6 +57,7 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 }
 
 func (t *teamController) DeleteTeam(c *gin.Context) {
+	log.Println("test >>", c.Param("teamID"))
 	teamID, err := strconv.Atoi(c.Param("teamID"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

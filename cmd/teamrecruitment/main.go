@@ -30,6 +30,7 @@ func main() {
 	app := gin.Default()
 
 	app.POST("/v1/teams", teamController.MakeTeam)
+	app.DELETE("/v1/teams/:teamID", teamController.DeleteTeam)
 
 	app.Run(":8080")
 }

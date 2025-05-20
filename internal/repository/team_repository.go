@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend_golang/ent"
+	"backend_golang/ent/position"
 	"backend_golang/ent/team"
 	"backend_golang/internal/service/models"
 	"context"
@@ -49,7 +50,16 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 }
 
 func (t *teamRepository) DeleteTeam(ctx context.Context, teamID int) error {
-	err := t.client.Team.DeleteOneID(teamID).Exec(ctx)
+	// First, delete all positions associated with the team
+	_, err := t.client.Position.Delete().Where(
+		position.HasTeamWith(team.ID(teamID)),
+	).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Then delete the team
+	err = t.client.Team.DeleteOneID(teamID).Exec(ctx)
 	if err != nil {
 		return err
 	}
