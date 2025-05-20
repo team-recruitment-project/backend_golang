@@ -30,9 +30,10 @@ paths:
               schema:
                 type: object
                 properties:
-                  message:
+                  teamID:
                     type: string
-                    example: チームが正常に作成されました
+                    description: 生成されてチーム ID
+                    example: 1004
         '400':
           description: リクエストが不正
           content:
