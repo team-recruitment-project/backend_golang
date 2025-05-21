@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"backend_golang/ent/announcement"
 	"backend_golang/ent/member"
 	"backend_golang/ent/position"
 	"backend_golang/ent/team"
@@ -75,9 +76,10 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			member.Table:   member.ValidColumn,
-			position.Table: position.ValidColumn,
-			team.Table:     team.ValidColumn,
+			announcement.Table: announcement.ValidColumn,
+			member.Table:       member.ValidColumn,
+			position.Table:     position.ValidColumn,
+			team.Table:         team.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

@@ -8,3 +8,8 @@ type CreateTeam struct {
 	Headcount   int8
 	Vacancies   []models.Vacancy
 }
+
+type RegisterAnnouncement struct {
+	Title   string
+	Content string
+}

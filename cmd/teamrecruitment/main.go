@@ -8,6 +8,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -28,9 +29,14 @@ func main() {
 	teamController := controller.NewTeamController(teamService)
 
 	app := gin.Default()
+	app.Use(cors.Default())
 
 	app.POST("/v1/teams", teamController.MakeTeam)
 	app.DELETE("/v1/teams/:teamID", teamController.DeleteTeam)
+
+	announcementController := controller.NewAnnouncementController()
+
+	app.POST("/v1/announcements", announcementController.Announce)
 
 	app.Run(":8080")
 }

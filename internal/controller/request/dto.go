@@ -14,6 +14,11 @@ type MakeTeamRequest struct {
 	Vacancies   []models.Vacancy `json:"vacancies" validate:"required,min=1,dive"`
 }
 
+type PostAnnouncement struct {
+	Title   string `json:"title" validate:"required,min=1,notblank"`
+	Content string `json:"content" validate:"required,min=1,notblank"`
+}
+
 var validate *validator.Validate
 
 func init() {
@@ -27,5 +32,9 @@ func validateNotBlank(fl validator.FieldLevel) bool {
 }
 
 func (r *MakeTeamRequest) Validate() error {
+	return validate.Struct(r)
+}
+
+func (r *PostAnnouncement) Validate() error {
 	return validate.Struct(r)
 }

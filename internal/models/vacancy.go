@@ -1,8 +1,8 @@
 package models
 
 type Vacancy struct {
-	Role    Role
-	Vacancy int8
+	Role    Role `json:"role"`
+	Vacancy int8 `json:"vacancy"`
 }
 
 // NewVacancy creates a new Vacancy instance
