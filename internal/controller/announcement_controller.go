@@ -41,7 +41,7 @@ func (a *announcementController) Announce(c *gin.Context) {
 		return
 	}
 
-	err := a.announcementService.Announce(c, &servicemodels.RegisterAnnouncement{
+	announcementID, err := a.announcementService.Announce(c, servicemodels.RegisterAnnouncement{
 		Title:   req.Title,
 		Content: req.Content,
 	})
@@ -50,5 +50,5 @@ func (a *announcementController) Announce(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Announcement created successfully"})
+	c.JSON(http.StatusCreated, gin.H{"announcementID": announcementID})
 }

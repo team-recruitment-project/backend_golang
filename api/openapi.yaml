@@ -9,6 +9,23 @@ servers:
     description: 開発環境
 
 paths:
+  /announcements:
+    post:
+      summary: 新しいお知らせを作成
+      description: 新しいお知らせを作成するためのエンドポイント
+      operationId: makeAnnouncement
+      tags:
+        - お知らせ
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAnnouncement'
+      responses:
+        '200':
+          description: お知らせの作成に成功
+          content:
   /teams:
     post:
       summary: 新しいチームを作成
@@ -58,6 +75,20 @@ paths:
 
 components:
   schemas:
+    PostAnnouncement:
+      type: object
+      required:
+        - title
+        - content
+      properties:
+        title:
+          type: string
+          description: お知らせタイトル
+          example: 新しいお知らせ
+        content:
+          type: string
+          description: お知らせ本文
+          example: 新しいお知らせです
     MakeTeamRequest:
       type: object
       required:
