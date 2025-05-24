@@ -15,6 +15,7 @@ import (
 	"backend_golang/ent/member"
 	"backend_golang/ent/position"
 	"backend_golang/ent/team"
+	"backend_golang/ent/transientmember"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect"
@@ -35,6 +36,8 @@ type Client struct {
 	Position *PositionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
+	// TransientMember is the client for interacting with the TransientMember builders.
+	TransientMember *TransientMemberClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -50,6 +53,7 @@ func (c *Client) init() {
 	c.Member = NewMemberClient(c.config)
 	c.Position = NewPositionClient(c.config)
 	c.Team = NewTeamClient(c.config)
+	c.TransientMember = NewTransientMemberClient(c.config)
 }
 
 type (
@@ -140,12 +144,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		Announcement: NewAnnouncementClient(cfg),
-		Member:       NewMemberClient(cfg),
-		Position:     NewPositionClient(cfg),
-		Team:         NewTeamClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		Announcement:    NewAnnouncementClient(cfg),
+		Member:          NewMemberClient(cfg),
+		Position:        NewPositionClient(cfg),
+		Team:            NewTeamClient(cfg),
+		TransientMember: NewTransientMemberClient(cfg),
 	}, nil
 }
 
@@ -163,12 +168,13 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:          ctx,
-		config:       cfg,
-		Announcement: NewAnnouncementClient(cfg),
-		Member:       NewMemberClient(cfg),
-		Position:     NewPositionClient(cfg),
-		Team:         NewTeamClient(cfg),
+		ctx:             ctx,
+		config:          cfg,
+		Announcement:    NewAnnouncementClient(cfg),
+		Member:          NewMemberClient(cfg),
+		Position:        NewPositionClient(cfg),
+		Team:            NewTeamClient(cfg),
+		TransientMember: NewTransientMemberClient(cfg),
 	}, nil
 }
 
@@ -201,6 +207,7 @@ func (c *Client) Use(hooks ...Hook) {
 	c.Member.Use(hooks...)
 	c.Position.Use(hooks...)
 	c.Team.Use(hooks...)
+	c.TransientMember.Use(hooks...)
 }
 
 // Intercept adds the query interceptors to all the entity clients.
@@ -210,6 +217,7 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	c.Member.Intercept(interceptors...)
 	c.Position.Intercept(interceptors...)
 	c.Team.Intercept(interceptors...)
+	c.TransientMember.Intercept(interceptors...)
 }
 
 // Mutate implements the ent.Mutator interface.
@@ -223,6 +231,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.Position.mutate(ctx, m)
 	case *TeamMutation:
 		return c.Team.mutate(ctx, m)
+	case *TransientMemberMutation:
+		return c.TransientMember.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
 	}
@@ -792,12 +802,145 @@ func (c *TeamClient) mutate(ctx context.Context, m *TeamMutation) (Value, error)
 	}
 }
 
+// TransientMemberClient is a client for the TransientMember schema.
+type TransientMemberClient struct {
+	config
+}
+
+// NewTransientMemberClient returns a client for the TransientMember from the given config.
+func NewTransientMemberClient(c config) *TransientMemberClient {
+	return &TransientMemberClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `transientmember.Hooks(f(g(h())))`.
+func (c *TransientMemberClient) Use(hooks ...Hook) {
+	c.hooks.TransientMember = append(c.hooks.TransientMember, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `transientmember.Intercept(f(g(h())))`.
+func (c *TransientMemberClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TransientMember = append(c.inters.TransientMember, interceptors...)
+}
+
+// Create returns a builder for creating a TransientMember entity.
+func (c *TransientMemberClient) Create() *TransientMemberCreate {
+	mutation := newTransientMemberMutation(c.config, OpCreate)
+	return &TransientMemberCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TransientMember entities.
+func (c *TransientMemberClient) CreateBulk(builders ...*TransientMemberCreate) *TransientMemberCreateBulk {
+	return &TransientMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TransientMemberClient) MapCreateBulk(slice any, setFunc func(*TransientMemberCreate, int)) *TransientMemberCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TransientMemberCreateBulk{err: fmt.Errorf("calling to TransientMemberClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TransientMemberCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TransientMemberCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TransientMember.
+func (c *TransientMemberClient) Update() *TransientMemberUpdate {
+	mutation := newTransientMemberMutation(c.config, OpUpdate)
+	return &TransientMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TransientMemberClient) UpdateOne(tm *TransientMember) *TransientMemberUpdateOne {
+	mutation := newTransientMemberMutation(c.config, OpUpdateOne, withTransientMember(tm))
+	return &TransientMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TransientMemberClient) UpdateOneID(id int) *TransientMemberUpdateOne {
+	mutation := newTransientMemberMutation(c.config, OpUpdateOne, withTransientMemberID(id))
+	return &TransientMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TransientMember.
+func (c *TransientMemberClient) Delete() *TransientMemberDelete {
+	mutation := newTransientMemberMutation(c.config, OpDelete)
+	return &TransientMemberDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TransientMemberClient) DeleteOne(tm *TransientMember) *TransientMemberDeleteOne {
+	return c.DeleteOneID(tm.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TransientMemberClient) DeleteOneID(id int) *TransientMemberDeleteOne {
+	builder := c.Delete().Where(transientmember.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TransientMemberDeleteOne{builder}
+}
+
+// Query returns a query builder for TransientMember.
+func (c *TransientMemberClient) Query() *TransientMemberQuery {
+	return &TransientMemberQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTransientMember},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TransientMember entity by its id.
+func (c *TransientMemberClient) Get(ctx context.Context, id int) (*TransientMember, error) {
+	return c.Query().Where(transientmember.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TransientMemberClient) GetX(ctx context.Context, id int) *TransientMember {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *TransientMemberClient) Hooks() []Hook {
+	return c.hooks.TransientMember
+}
+
+// Interceptors returns the client interceptors.
+func (c *TransientMemberClient) Interceptors() []Interceptor {
+	return c.inters.TransientMember
+}
+
+func (c *TransientMemberClient) mutate(ctx context.Context, m *TransientMemberMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TransientMemberCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TransientMemberUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TransientMemberUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TransientMemberDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TransientMember mutation op: %q", m.Op())
+	}
+}
+
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Announcement, Member, Position, Team []ent.Hook
+		Announcement, Member, Position, Team, TransientMember []ent.Hook
 	}
 	inters struct {
-		Announcement, Member, Position, Team []ent.Interceptor
+		Announcement, Member, Position, Team, TransientMember []ent.Interceptor
 	}
 )

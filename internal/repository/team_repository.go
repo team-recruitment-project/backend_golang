@@ -29,6 +29,7 @@ func NewTeamRepository(client *ent.Client) TeamRepository {
 }
 
 func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error) {
+	// TODO : createTeam 을 서비스의 dto 가 아니라 리포지토리단의 domain 모델로 변경
 	// Validate input
 	if createTeam.TeamName == "" {
 		return nil, fmt.Errorf("team name cannot be empty")

@@ -56,6 +56,18 @@ func (f TeamFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TeamMutation", m)
 }
 
+// The TransientMemberFunc type is an adapter to allow the use of ordinary
+// function as TransientMember mutator.
+type TransientMemberFunc func(context.Context, *ent.TransientMemberMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f TransientMemberFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.TransientMemberMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TransientMemberMutation", m)
+}
+
 // Condition is a hook condition function.
 type Condition func(context.Context, ent.Mutation) bool
 

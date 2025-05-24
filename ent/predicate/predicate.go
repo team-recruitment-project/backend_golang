@@ -17,3 +17,6 @@ type Position func(*sql.Selector)
 
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
+
+// TransientMember is the predicate function for transientmember builders.
+type TransientMember func(*sql.Selector)

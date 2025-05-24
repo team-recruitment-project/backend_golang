@@ -20,6 +20,8 @@ type Tx struct {
 	Position *PositionClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
+	// TransientMember is the client for interacting with the TransientMember builders.
+	TransientMember *TransientMemberClient
 
 	// lazily loaded.
 	client     *Client
@@ -155,6 +157,7 @@ func (tx *Tx) init() {
 	tx.Member = NewMemberClient(tx.config)
 	tx.Position = NewPositionClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
+	tx.TransientMember = NewTransientMemberClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

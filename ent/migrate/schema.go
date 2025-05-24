@@ -23,6 +23,7 @@ var (
 	// MembersColumns holds the columns for the "members" table.
 	MembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "member_id", Type: field.TypeString, Unique: true},
 		{Name: "email", Type: field.TypeString},
 		{Name: "picture", Type: field.TypeString},
 		{Name: "nickname", Type: field.TypeString},
@@ -69,12 +70,27 @@ var (
 		Columns:    TeamsColumns,
 		PrimaryKey: []*schema.Column{TeamsColumns[0]},
 	}
+	// TransientMembersColumns holds the columns for the "transient_members" table.
+	TransientMembersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "transient_member_id", Type: field.TypeString, Unique: true},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "picture", Type: field.TypeString},
+		{Name: "nickname", Type: field.TypeString},
+	}
+	// TransientMembersTable holds the schema information for the "transient_members" table.
+	TransientMembersTable = &schema.Table{
+		Name:       "transient_members",
+		Columns:    TransientMembersColumns,
+		PrimaryKey: []*schema.Column{TransientMembersColumns[0]},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AnnouncementsTable,
 		MembersTable,
 		PositionsTable,
 		TeamsTable,
+		TransientMembersTable,
 	}
 )
 

@@ -53,6 +53,11 @@ func IDLTE(id int) predicate.Member {
 	return predicate.Member(sql.FieldLTE(FieldID, id))
 }
 
+// MemberID applies equality check predicate on the "member_id" field. It's identical to MemberIDEQ.
+func MemberID(v string) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldMemberID, v))
+}
+
 // Email applies equality check predicate on the "email" field. It's identical to EmailEQ.
 func Email(v string) predicate.Member {
 	return predicate.Member(sql.FieldEQ(FieldEmail, v))
@@ -76,6 +81,71 @@ func Bio(v string) predicate.Member {
 // PreferredRole applies equality check predicate on the "preferred_role" field. It's identical to PreferredRoleEQ.
 func PreferredRole(v string) predicate.Member {
 	return predicate.Member(sql.FieldEQ(FieldPreferredRole, v))
+}
+
+// MemberIDEQ applies the EQ predicate on the "member_id" field.
+func MemberIDEQ(v string) predicate.Member {
+	return predicate.Member(sql.FieldEQ(FieldMemberID, v))
+}
+
+// MemberIDNEQ applies the NEQ predicate on the "member_id" field.
+func MemberIDNEQ(v string) predicate.Member {
+	return predicate.Member(sql.FieldNEQ(FieldMemberID, v))
+}
+
+// MemberIDIn applies the In predicate on the "member_id" field.
+func MemberIDIn(vs ...string) predicate.Member {
+	return predicate.Member(sql.FieldIn(FieldMemberID, vs...))
+}
+
+// MemberIDNotIn applies the NotIn predicate on the "member_id" field.
+func MemberIDNotIn(vs ...string) predicate.Member {
+	return predicate.Member(sql.FieldNotIn(FieldMemberID, vs...))
+}
+
+// MemberIDGT applies the GT predicate on the "member_id" field.
+func MemberIDGT(v string) predicate.Member {
+	return predicate.Member(sql.FieldGT(FieldMemberID, v))
+}
+
+// MemberIDGTE applies the GTE predicate on the "member_id" field.
+func MemberIDGTE(v string) predicate.Member {
+	return predicate.Member(sql.FieldGTE(FieldMemberID, v))
+}
+
+// MemberIDLT applies the LT predicate on the "member_id" field.
+func MemberIDLT(v string) predicate.Member {
+	return predicate.Member(sql.FieldLT(FieldMemberID, v))
+}
+
+// MemberIDLTE applies the LTE predicate on the "member_id" field.
+func MemberIDLTE(v string) predicate.Member {
+	return predicate.Member(sql.FieldLTE(FieldMemberID, v))
+}
+
+// MemberIDContains applies the Contains predicate on the "member_id" field.
+func MemberIDContains(v string) predicate.Member {
+	return predicate.Member(sql.FieldContains(FieldMemberID, v))
+}
+
+// MemberIDHasPrefix applies the HasPrefix predicate on the "member_id" field.
+func MemberIDHasPrefix(v string) predicate.Member {
+	return predicate.Member(sql.FieldHasPrefix(FieldMemberID, v))
+}
+
+// MemberIDHasSuffix applies the HasSuffix predicate on the "member_id" field.
+func MemberIDHasSuffix(v string) predicate.Member {
+	return predicate.Member(sql.FieldHasSuffix(FieldMemberID, v))
+}
+
+// MemberIDEqualFold applies the EqualFold predicate on the "member_id" field.
+func MemberIDEqualFold(v string) predicate.Member {
+	return predicate.Member(sql.FieldEqualFold(FieldMemberID, v))
+}
+
+// MemberIDContainsFold applies the ContainsFold predicate on the "member_id" field.
+func MemberIDContainsFold(v string) predicate.Member {
+	return predicate.Member(sql.FieldContainsFold(FieldMemberID, v))
 }
 
 // EmailEQ applies the EQ predicate on the "email" field.

@@ -19,6 +19,12 @@ type MemberCreate struct {
 	hooks    []Hook
 }
 
+// SetMemberID sets the "member_id" field.
+func (mc *MemberCreate) SetMemberID(s string) *MemberCreate {
+	mc.mutation.SetMemberID(s)
+	return mc
+}
+
 // SetEmail sets the "email" field.
 func (mc *MemberCreate) SetEmail(s string) *MemberCreate {
 	mc.mutation.SetEmail(s)
@@ -83,6 +89,9 @@ func (mc *MemberCreate) ExecX(ctx context.Context) {
 
 // check runs all checks and user-defined validators on the builder.
 func (mc *MemberCreate) check() error {
+	if _, ok := mc.mutation.MemberID(); !ok {
+		return &ValidationError{Name: "member_id", err: errors.New(`ent: missing required field "Member.member_id"`)}
+	}
 	if _, ok := mc.mutation.Email(); !ok {
 		return &ValidationError{Name: "email", err: errors.New(`ent: missing required field "Member.email"`)}
 	}
@@ -124,6 +133,10 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		_node = &Member{config: mc.config}
 		_spec = sqlgraph.NewCreateSpec(member.Table, sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt))
 	)
+	if value, ok := mc.mutation.MemberID(); ok {
+		_spec.SetField(member.FieldMemberID, field.TypeString, value)
+		_node.MemberID = value
+	}
 	if value, ok := mc.mutation.Email(); ok {
 		_spec.SetField(member.FieldEmail, field.TypeString, value)
 		_node.Email = value

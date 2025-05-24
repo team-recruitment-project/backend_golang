@@ -13,3 +13,7 @@ type RegisterAnnouncement struct {
 	Title   string
 	Content string
 }
+
+type LoginResponse struct {
+	URL string `json:"url"`
+}

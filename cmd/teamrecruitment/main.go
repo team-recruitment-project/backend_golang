@@ -38,5 +38,12 @@ func main() {
 
 	app.POST("/v1/announcements", announcementController.Announce)
 
+	authRepository := repository.NewAuthRepository()
+	authService := service.NewAuthService(authRepository)
+	authController := controller.NewAuthController(authService)
+
+	app.GET("/v1/auth/login", authController.Login)
+	app.GET("/login/oauth2/code/google", authController.GoogleCallback)
+
 	app.Run(":8080")
 }

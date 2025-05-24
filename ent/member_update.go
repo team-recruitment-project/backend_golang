@@ -27,6 +27,20 @@ func (mu *MemberUpdate) Where(ps ...predicate.Member) *MemberUpdate {
 	return mu
 }
 
+// SetMemberID sets the "member_id" field.
+func (mu *MemberUpdate) SetMemberID(s string) *MemberUpdate {
+	mu.mutation.SetMemberID(s)
+	return mu
+}
+
+// SetNillableMemberID sets the "member_id" field if the given value is not nil.
+func (mu *MemberUpdate) SetNillableMemberID(s *string) *MemberUpdate {
+	if s != nil {
+		mu.SetMemberID(*s)
+	}
+	return mu
+}
+
 // SetEmail sets the "email" field.
 func (mu *MemberUpdate) SetEmail(s string) *MemberUpdate {
 	mu.mutation.SetEmail(s)
@@ -138,6 +152,9 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if value, ok := mu.mutation.MemberID(); ok {
+		_spec.SetField(member.FieldMemberID, field.TypeString, value)
+	}
 	if value, ok := mu.mutation.Email(); ok {
 		_spec.SetField(member.FieldEmail, field.TypeString, value)
 	}
@@ -171,6 +188,20 @@ type MemberUpdateOne struct {
 	fields   []string
 	hooks    []Hook
 	mutation *MemberMutation
+}
+
+// SetMemberID sets the "member_id" field.
+func (muo *MemberUpdateOne) SetMemberID(s string) *MemberUpdateOne {
+	muo.mutation.SetMemberID(s)
+	return muo
+}
+
+// SetNillableMemberID sets the "member_id" field if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableMemberID(s *string) *MemberUpdateOne {
+	if s != nil {
+		muo.SetMemberID(*s)
+	}
+	return muo
 }
 
 // SetEmail sets the "email" field.
@@ -313,6 +344,9 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 				ps[i](selector)
 			}
 		}
+	}
+	if value, ok := muo.mutation.MemberID(); ok {
+		_spec.SetField(member.FieldMemberID, field.TypeString, value)
 	}
 	if value, ok := muo.mutation.Email(); ok {
 		_spec.SetField(member.FieldEmail, field.TypeString, value)

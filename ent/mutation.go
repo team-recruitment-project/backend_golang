@@ -8,6 +8,7 @@ import (
 	"backend_golang/ent/position"
 	"backend_golang/ent/predicate"
 	"backend_golang/ent/team"
+	"backend_golang/ent/transientmember"
 	"context"
 	"errors"
 	"fmt"
@@ -26,10 +27,11 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeAnnouncement = "Announcement"
-	TypeMember       = "Member"
-	TypePosition     = "Position"
-	TypeTeam         = "Team"
+	TypeAnnouncement    = "Announcement"
+	TypeMember          = "Member"
+	TypePosition        = "Position"
+	TypeTeam            = "Team"
+	TypeTransientMember = "TransientMember"
 )
 
 // AnnouncementMutation represents an operation that mutates the Announcement nodes in the graph.
@@ -418,6 +420,7 @@ type MemberMutation struct {
 	op             Op
 	typ            string
 	id             *int
+	member_id      *string
 	email          *string
 	picture        *string
 	nickname       *string
@@ -525,6 +528,42 @@ func (m *MemberMutation) IDs(ctx context.Context) ([]int, error) {
 	default:
 		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
 	}
+}
+
+// SetMemberID sets the "member_id" field.
+func (m *MemberMutation) SetMemberID(s string) {
+	m.member_id = &s
+}
+
+// MemberID returns the value of the "member_id" field in the mutation.
+func (m *MemberMutation) MemberID() (r string, exists bool) {
+	v := m.member_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMemberID returns the old "member_id" field's value of the Member entity.
+// If the Member object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *MemberMutation) OldMemberID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMemberID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMemberID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMemberID: %w", err)
+	}
+	return oldValue.MemberID, nil
+}
+
+// ResetMemberID resets all changes to the "member_id" field.
+func (m *MemberMutation) ResetMemberID() {
+	m.member_id = nil
 }
 
 // SetEmail sets the "email" field.
@@ -741,7 +780,10 @@ func (m *MemberMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *MemberMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
+	if m.member_id != nil {
+		fields = append(fields, member.FieldMemberID)
+	}
 	if m.email != nil {
 		fields = append(fields, member.FieldEmail)
 	}
@@ -765,6 +807,8 @@ func (m *MemberMutation) Fields() []string {
 // schema.
 func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 	switch name {
+	case member.FieldMemberID:
+		return m.MemberID()
 	case member.FieldEmail:
 		return m.Email()
 	case member.FieldPicture:
@@ -784,6 +828,8 @@ func (m *MemberMutation) Field(name string) (ent.Value, bool) {
 // database failed.
 func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
 	switch name {
+	case member.FieldMemberID:
+		return m.OldMemberID(ctx)
 	case member.FieldEmail:
 		return m.OldEmail(ctx)
 	case member.FieldPicture:
@@ -803,6 +849,13 @@ func (m *MemberMutation) OldField(ctx context.Context, name string) (ent.Value, 
 // type.
 func (m *MemberMutation) SetField(name string, value ent.Value) error {
 	switch name {
+	case member.FieldMemberID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMemberID(v)
+		return nil
 	case member.FieldEmail:
 		v, ok := value.(string)
 		if !ok {
@@ -887,6 +940,9 @@ func (m *MemberMutation) ClearField(name string) error {
 // It returns an error if the field is not defined in the schema.
 func (m *MemberMutation) ResetField(name string) error {
 	switch name {
+	case member.FieldMemberID:
+		m.ResetMemberID()
+		return nil
 	case member.FieldEmail:
 		m.ResetEmail()
 		return nil
@@ -2061,4 +2117,492 @@ func (m *TeamMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Team edge %s", name)
+}
+
+// TransientMemberMutation represents an operation that mutates the TransientMember nodes in the graph.
+type TransientMemberMutation struct {
+	config
+	op                  Op
+	typ                 string
+	id                  *int
+	transient_member_id *string
+	email               *string
+	picture             *string
+	nickname            *string
+	clearedFields       map[string]struct{}
+	done                bool
+	oldValue            func(context.Context) (*TransientMember, error)
+	predicates          []predicate.TransientMember
+}
+
+var _ ent.Mutation = (*TransientMemberMutation)(nil)
+
+// transientmemberOption allows management of the mutation configuration using functional options.
+type transientmemberOption func(*TransientMemberMutation)
+
+// newTransientMemberMutation creates new mutation for the TransientMember entity.
+func newTransientMemberMutation(c config, op Op, opts ...transientmemberOption) *TransientMemberMutation {
+	m := &TransientMemberMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTransientMember,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTransientMemberID sets the ID field of the mutation.
+func withTransientMemberID(id int) transientmemberOption {
+	return func(m *TransientMemberMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TransientMember
+		)
+		m.oldValue = func(ctx context.Context) (*TransientMember, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TransientMember.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTransientMember sets the old TransientMember of the mutation.
+func withTransientMember(node *TransientMember) transientmemberOption {
+	return func(m *TransientMemberMutation) {
+		m.oldValue = func(context.Context) (*TransientMember, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TransientMemberMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TransientMemberMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TransientMemberMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TransientMemberMutation) IDs(ctx context.Context) ([]int, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []int{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TransientMember.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetTransientMemberID sets the "transient_member_id" field.
+func (m *TransientMemberMutation) SetTransientMemberID(s string) {
+	m.transient_member_id = &s
+}
+
+// TransientMemberID returns the value of the "transient_member_id" field in the mutation.
+func (m *TransientMemberMutation) TransientMemberID() (r string, exists bool) {
+	v := m.transient_member_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTransientMemberID returns the old "transient_member_id" field's value of the TransientMember entity.
+// If the TransientMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransientMemberMutation) OldTransientMemberID(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTransientMemberID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTransientMemberID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTransientMemberID: %w", err)
+	}
+	return oldValue.TransientMemberID, nil
+}
+
+// ResetTransientMemberID resets all changes to the "transient_member_id" field.
+func (m *TransientMemberMutation) ResetTransientMemberID() {
+	m.transient_member_id = nil
+}
+
+// SetEmail sets the "email" field.
+func (m *TransientMemberMutation) SetEmail(s string) {
+	m.email = &s
+}
+
+// Email returns the value of the "email" field in the mutation.
+func (m *TransientMemberMutation) Email() (r string, exists bool) {
+	v := m.email
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEmail returns the old "email" field's value of the TransientMember entity.
+// If the TransientMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransientMemberMutation) OldEmail(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEmail is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEmail requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEmail: %w", err)
+	}
+	return oldValue.Email, nil
+}
+
+// ResetEmail resets all changes to the "email" field.
+func (m *TransientMemberMutation) ResetEmail() {
+	m.email = nil
+}
+
+// SetPicture sets the "picture" field.
+func (m *TransientMemberMutation) SetPicture(s string) {
+	m.picture = &s
+}
+
+// Picture returns the value of the "picture" field in the mutation.
+func (m *TransientMemberMutation) Picture() (r string, exists bool) {
+	v := m.picture
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPicture returns the old "picture" field's value of the TransientMember entity.
+// If the TransientMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransientMemberMutation) OldPicture(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPicture is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPicture requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPicture: %w", err)
+	}
+	return oldValue.Picture, nil
+}
+
+// ResetPicture resets all changes to the "picture" field.
+func (m *TransientMemberMutation) ResetPicture() {
+	m.picture = nil
+}
+
+// SetNickname sets the "nickname" field.
+func (m *TransientMemberMutation) SetNickname(s string) {
+	m.nickname = &s
+}
+
+// Nickname returns the value of the "nickname" field in the mutation.
+func (m *TransientMemberMutation) Nickname() (r string, exists bool) {
+	v := m.nickname
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldNickname returns the old "nickname" field's value of the TransientMember entity.
+// If the TransientMember object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TransientMemberMutation) OldNickname(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldNickname is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldNickname requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldNickname: %w", err)
+	}
+	return oldValue.Nickname, nil
+}
+
+// ResetNickname resets all changes to the "nickname" field.
+func (m *TransientMemberMutation) ResetNickname() {
+	m.nickname = nil
+}
+
+// Where appends a list predicates to the TransientMemberMutation builder.
+func (m *TransientMemberMutation) Where(ps ...predicate.TransientMember) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TransientMemberMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TransientMemberMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TransientMember, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TransientMemberMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TransientMemberMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TransientMember).
+func (m *TransientMemberMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TransientMemberMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.transient_member_id != nil {
+		fields = append(fields, transientmember.FieldTransientMemberID)
+	}
+	if m.email != nil {
+		fields = append(fields, transientmember.FieldEmail)
+	}
+	if m.picture != nil {
+		fields = append(fields, transientmember.FieldPicture)
+	}
+	if m.nickname != nil {
+		fields = append(fields, transientmember.FieldNickname)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TransientMemberMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case transientmember.FieldTransientMemberID:
+		return m.TransientMemberID()
+	case transientmember.FieldEmail:
+		return m.Email()
+	case transientmember.FieldPicture:
+		return m.Picture()
+	case transientmember.FieldNickname:
+		return m.Nickname()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TransientMemberMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case transientmember.FieldTransientMemberID:
+		return m.OldTransientMemberID(ctx)
+	case transientmember.FieldEmail:
+		return m.OldEmail(ctx)
+	case transientmember.FieldPicture:
+		return m.OldPicture(ctx)
+	case transientmember.FieldNickname:
+		return m.OldNickname(ctx)
+	}
+	return nil, fmt.Errorf("unknown TransientMember field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TransientMemberMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case transientmember.FieldTransientMemberID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTransientMemberID(v)
+		return nil
+	case transientmember.FieldEmail:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEmail(v)
+		return nil
+	case transientmember.FieldPicture:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPicture(v)
+		return nil
+	case transientmember.FieldNickname:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetNickname(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TransientMember field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TransientMemberMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TransientMemberMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TransientMemberMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TransientMember numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TransientMemberMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TransientMemberMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TransientMemberMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown TransientMember nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TransientMemberMutation) ResetField(name string) error {
+	switch name {
+	case transientmember.FieldTransientMemberID:
+		m.ResetTransientMemberID()
+		return nil
+	case transientmember.FieldEmail:
+		m.ResetEmail()
+		return nil
+	case transientmember.FieldPicture:
+		m.ResetPicture()
+		return nil
+	case transientmember.FieldNickname:
+		m.ResetNickname()
+		return nil
+	}
+	return fmt.Errorf("unknown TransientMember field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TransientMemberMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TransientMemberMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TransientMemberMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TransientMemberMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TransientMemberMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TransientMemberMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TransientMemberMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown TransientMember unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TransientMemberMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown TransientMember edge %s", name)
 }
