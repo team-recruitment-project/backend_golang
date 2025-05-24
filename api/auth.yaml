@@ -1,0 +1,134 @@
+openapi: 3.0.0
+info:
+  title: 認証API
+  description: ユーザー認証のためのAPI仕様書
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: 開発環境
+
+paths:
+  /v1/auth/login:
+    post:
+      summary: ユーザーログイン
+      description: ユーザーのログイン処理を行うエンドポイント
+      operationId: login
+      tags:
+        - 認証
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    description: Google OAuth認証URL
+                    example: "https://accounts.google.com/o/oauth2/v2/auth?client_id=..."
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "認証に失敗しました"
+
+  /v1/auth/signup:
+    post:
+      summary: ユーザー登録
+      description: 新規ユーザーの登録処理を行うエンドポイント
+      operationId: signup
+      tags:
+        - 認証
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignUpRequest'
+      responses:
+        '201':
+          description: 登録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  memberID:
+                    type: string
+                    description: 生成されたメンバーID
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "認証が必要です"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "内部サーバーエラーが発生しました"
+
+components:
+  schemas:
+    SignUpRequest:
+      type: object
+      required:
+        - bio
+        - preferredRole
+      properties:
+        bio:
+          type: string
+          description: ユーザーの自己紹介
+          example: "バックエンドエンジニアとして3年の経験があります"
+        preferredRole:
+          type: string
+          description: 希望する役割
+          enum: [FRONTEND, BACKEND, INFRA, DESIGNER, MANAGER, FULLSTACK, MOBILE]
+          example: "BACKEND"
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: バリデーションエラーが発生したフィールド
+          example: "bio"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "自己紹介は必須です"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 

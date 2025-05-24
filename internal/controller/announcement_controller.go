@@ -19,8 +19,10 @@ type announcementController struct {
 	announcementService service.AnnouncementService
 }
 
-func NewAnnouncementController() AnnouncementController {
-	return &announcementController{}
+func NewAnnouncementController(announcementService service.AnnouncementService) AnnouncementController {
+	return &announcementController{
+		announcementService: announcementService,
+	}
 }
 
 func (a *announcementController) Announce(c *gin.Context) {

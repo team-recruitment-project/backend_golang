@@ -25,20 +25,25 @@ func main() {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
 
+	app := gin.Default()
+
+	// Middleware
+	app.Use(cors.Default())
+
+	// Team
 	teamRepository := repository.NewTeamRepository(client)
 	teamService := service.NewTeamService(teamRepository)
 	teamController := controller.NewTeamController(teamService)
-
-	app := gin.Default()
-	app.Use(cors.Default())
-
 	app.POST("/v1/teams", teamController.MakeTeam)
 	app.DELETE("/v1/teams/:teamID", teamController.DeleteTeam)
 
-	announcementController := controller.NewAnnouncementController()
-
+	// Announcement
+	announcementRepository := repository.NewAnnouncementRepository(client)
+	announcementService := service.NewAnnouncementService(announcementRepository)
+	announcementController := controller.NewAnnouncementController(announcementService)
 	app.POST("/v1/announcements", announcementController.Announce)
 
+	// Auth
 	authRepository := repository.NewAuthRepository(client)
 	authService := service.NewAuthService(authRepository)
 	authController := controller.NewAuthController(authService)

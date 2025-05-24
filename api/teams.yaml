@@ -9,7 +9,7 @@ servers:
     description: 開発環境
 
 paths:
-  /announcements:
+  /v1/announcements:
     post:
       summary: 新しいお知らせを作成
       description: 新しいお知らせを作成するためのエンドポイント
@@ -26,7 +26,7 @@ paths:
         '200':
           description: お知らせの作成に成功
           content:
-  /teams:
+  /v1/teams:
     post:
       summary: 新しいチームを作成
       description: 新しいチームを作成するためのエンドポイント

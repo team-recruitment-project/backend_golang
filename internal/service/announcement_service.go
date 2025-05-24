@@ -14,7 +14,7 @@ type announcementService struct {
 	announcementRepository repository.AnnouncementRepository
 }
 
-func NewAnnouncementController(announcementRepository repository.AnnouncementRepository) AnnouncementService {
+func NewAnnouncementService(announcementRepository repository.AnnouncementRepository) AnnouncementService {
 	return &announcementService{
 		announcementRepository: announcementRepository,
 	}
