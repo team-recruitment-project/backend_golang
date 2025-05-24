@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend_golang/cmd/middleware"
 	"backend_golang/ent"
 	"backend_golang/internal/controller"
 	"backend_golang/internal/repository"
@@ -38,12 +39,13 @@ func main() {
 
 	app.POST("/v1/announcements", announcementController.Announce)
 
-	authRepository := repository.NewAuthRepository()
+	authRepository := repository.NewAuthRepository(client)
 	authService := service.NewAuthService(authRepository)
 	authController := controller.NewAuthController(authService)
 
 	app.GET("/v1/auth/login", authController.Login)
 	app.GET("/login/oauth2/code/google", authController.GoogleCallback)
+	app.POST("/v1/auth/signup", authController.Signup, middleware.Authentication())
 
 	app.Run(":8080")
 }

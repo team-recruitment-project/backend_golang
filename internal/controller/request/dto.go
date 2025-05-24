@@ -19,6 +19,11 @@ type PostAnnouncement struct {
 	Content string `json:"content" validate:"required,min=1,notblank"`
 }
 
+type SignUpRequest struct {
+	Bio           string `json:"bio" validate:"required,min=1,notblank"`
+	PreferredRole string `json:"preferredRole" validate:"required,min=1,notblank"`
+}
+
 var validate *validator.Validate
 
 func init() {
@@ -36,5 +41,9 @@ func (r *MakeTeamRequest) Validate() error {
 }
 
 func (r *PostAnnouncement) Validate() error {
+	return validate.Struct(r)
+}
+
+func (r *SignUpRequest) Validate() error {
 	return validate.Struct(r)
 }

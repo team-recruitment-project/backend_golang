@@ -17,6 +17,7 @@ import (
 type AuthService interface {
 	Login(c context.Context) models.LoginResponse
 	GoogleCallback(c *gin.Context, code string) (string, error)
+	Signup(c *gin.Context, userID string, signup models.SignupMember) (error, string)
 }
 
 type authService struct {
@@ -72,4 +73,17 @@ func (a *authService) GoogleCallback(c *gin.Context, code string) (string, error
 	}
 
 	return accessToken, nil
+}
+
+func (a *authService) Signup(c *gin.Context, userID string, signup models.SignupMember) (error, string) {
+	member, err := a.authRepository.CreateMember(c, &domain.Member{
+		ID:            userID,
+		Bio:           signup.Bio,
+		PreferredRole: string(signup.PreferredRole),
+	})
+	if err != nil {
+		return err, ""
+	}
+
+	return nil, member.ID
 }

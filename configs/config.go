@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/joho/godotenv"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -38,13 +39,20 @@ func NewOAuth() *OAuth {
 
 func NewJWT() *JWT {
 	return &JWT{
-		secret: os.Getenv("JWT_SECRET"),
+		secret: os.Getenv("JWT_SIGN_KEY"),
 	}
 }
 
 func init() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
+	}
 	OAuthConfig = NewOAuth()
 	JWTConfig = NewJWT()
+
+	log.Println("OAuthConfig", OAuthConfig)
+	log.Println("JWTConfig", JWTConfig)
 }
 
 func (o *OAuth) GetAccessToken(c context.Context, code string) (*oauth2.Token, error) {

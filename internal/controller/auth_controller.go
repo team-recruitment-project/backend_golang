@@ -1,16 +1,21 @@
 package controller
 
 import (
+	"backend_golang/internal/controller/request"
+	"backend_golang/internal/models"
 	"backend_golang/internal/service"
+	smodels "backend_golang/internal/service/models"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 )
 
 type AuthController interface {
 	Login(c *gin.Context)
 	GoogleCallback(c *gin.Context)
+	Signup(c *gin.Context)
 }
 
 type authController struct {
@@ -46,4 +51,41 @@ func (a *authController) GoogleCallback(c *gin.Context) {
 	})
 
 	c.Redirect(http.StatusTemporaryRedirect, "/")
+}
+
+func (a *authController) Signup(c *gin.Context) {
+	userID := c.Value("userID").(string)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	req := &request.SignUpRequest{}
+	if err := c.ShouldBindJSON(req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := req.Validate(); err != nil {
+		validationErrors := make([]models.ValidationError, 0)
+		for _, err := range err.(validator.ValidationErrors) {
+			validationErrors = append(validationErrors, models.NewValidationError(err))
+		}
+		c.JSON(http.StatusBadRequest, gin.H{
+			"errors": validationErrors,
+		})
+		return
+	}
+
+	signup := smodels.SignupMember{
+		Bio:           req.Bio,
+		PreferredRole: models.Role(req.PreferredRole),
+	}
+	err, memberID := a.authService.Signup(c, userID, signup)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"memberID": memberID})
 }

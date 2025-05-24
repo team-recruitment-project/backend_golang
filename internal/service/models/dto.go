@@ -14,6 +14,11 @@ type RegisterAnnouncement struct {
 	Content string
 }
 
+type SignupMember struct {
+	Bio           string
+	PreferredRole models.Role
+}
+
 type LoginResponse struct {
 	URL string `json:"url"`
 }
