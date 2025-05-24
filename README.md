@@ -31,7 +31,14 @@ go test ./... -v
 ```
 
 ## API 明細書
-
+OpenAPI形式で提供
 ```text
-/api/openapi.yaml
+/api/*.yaml
 ```
+
+### Auth
+- [Auth API Specification](/api/auth.yaml)
+
+### Team
+
+- [Teams API Specification](/api/teams.yaml)
