@@ -42,12 +42,20 @@ paths:
   /v1/auth/signup:
     post:
       summary: ユーザー登録
-      description: 新規ユーザーの登録処理を行うエンドポイント
+      description: 新規ユーザーの登録処理を行うエンドポイント。access_tokenクッキーが必要です。
       operationId: signup
       tags:
         - 認証
       security:
         - BearerAuth: []
+      parameters:
+        - name: access_token
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          description: JWTアクセストークン
       requestBody:
         required: true
         content:
@@ -101,12 +109,20 @@ paths:
   /v1/me:
     get:
       summary: メンバー情報取得
-      description: 現在ログインしているユーザーのメンバー情報を取得するエンドポイント
+      description: 現在ログインしているユーザーのメンバー情報を取得するエンドポイント。access_tokenクッキーが必要です。
       operationId: getMember
       tags:
         - 認証
       security:
         - BearerAuth: []
+      parameters:
+        - name: access_token
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          description: JWTアクセストークン
       responses:
         '200':
           description: メンバー情報取得成功
