@@ -5,6 +5,7 @@ package ent
 import (
 	"backend_golang/ent/position"
 	"backend_golang/ent/predicate"
+	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
 	"context"
 	"errors"
@@ -92,6 +93,21 @@ func (tu *TeamUpdate) AddPositions(p ...*Position) *TeamUpdate {
 	return tu.AddPositionIDs(ids...)
 }
 
+// AddSkillIDs adds the "skills" edge to the Skill entity by IDs.
+func (tu *TeamUpdate) AddSkillIDs(ids ...int) *TeamUpdate {
+	tu.mutation.AddSkillIDs(ids...)
+	return tu
+}
+
+// AddSkills adds the "skills" edges to the Skill entity.
+func (tu *TeamUpdate) AddSkills(s ...*Skill) *TeamUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return tu.AddSkillIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tu *TeamUpdate) Mutation() *TeamMutation {
 	return tu.mutation
@@ -116,6 +132,27 @@ func (tu *TeamUpdate) RemovePositions(p ...*Position) *TeamUpdate {
 		ids[i] = p[i].ID
 	}
 	return tu.RemovePositionIDs(ids...)
+}
+
+// ClearSkills clears all "skills" edges to the Skill entity.
+func (tu *TeamUpdate) ClearSkills() *TeamUpdate {
+	tu.mutation.ClearSkills()
+	return tu
+}
+
+// RemoveSkillIDs removes the "skills" edge to Skill entities by IDs.
+func (tu *TeamUpdate) RemoveSkillIDs(ids ...int) *TeamUpdate {
+	tu.mutation.RemoveSkillIDs(ids...)
+	return tu
+}
+
+// RemoveSkills removes "skills" edges to Skill entities.
+func (tu *TeamUpdate) RemoveSkills(s ...*Skill) *TeamUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return tu.RemoveSkillIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -211,6 +248,51 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if tu.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   team.SkillsTable,
+			Columns: team.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedSkillsIDs(); len(nodes) > 0 && !tu.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   team.SkillsTable,
+			Columns: team.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.SkillsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   team.SkillsTable,
+			Columns: team.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{team.Label}
@@ -295,6 +377,21 @@ func (tuo *TeamUpdateOne) AddPositions(p ...*Position) *TeamUpdateOne {
 	return tuo.AddPositionIDs(ids...)
 }
 
+// AddSkillIDs adds the "skills" edge to the Skill entity by IDs.
+func (tuo *TeamUpdateOne) AddSkillIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.AddSkillIDs(ids...)
+	return tuo
+}
+
+// AddSkills adds the "skills" edges to the Skill entity.
+func (tuo *TeamUpdateOne) AddSkills(s ...*Skill) *TeamUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return tuo.AddSkillIDs(ids...)
+}
+
 // Mutation returns the TeamMutation object of the builder.
 func (tuo *TeamUpdateOne) Mutation() *TeamMutation {
 	return tuo.mutation
@@ -319,6 +416,27 @@ func (tuo *TeamUpdateOne) RemovePositions(p ...*Position) *TeamUpdateOne {
 		ids[i] = p[i].ID
 	}
 	return tuo.RemovePositionIDs(ids...)
+}
+
+// ClearSkills clears all "skills" edges to the Skill entity.
+func (tuo *TeamUpdateOne) ClearSkills() *TeamUpdateOne {
+	tuo.mutation.ClearSkills()
+	return tuo
+}
+
+// RemoveSkillIDs removes the "skills" edge to Skill entities by IDs.
+func (tuo *TeamUpdateOne) RemoveSkillIDs(ids ...int) *TeamUpdateOne {
+	tuo.mutation.RemoveSkillIDs(ids...)
+	return tuo
+}
+
+// RemoveSkills removes "skills" edges to Skill entities.
+func (tuo *TeamUpdateOne) RemoveSkills(s ...*Skill) *TeamUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return tuo.RemoveSkillIDs(ids...)
 }
 
 // Where appends a list predicates to the TeamUpdate builder.
@@ -437,6 +555,51 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   team.SkillsTable,
+			Columns: team.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedSkillsIDs(); len(nodes) > 0 && !tuo.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   team.SkillsTable,
+			Columns: team.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.SkillsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   team.SkillsTable,
+			Columns: team.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

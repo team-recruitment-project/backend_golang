@@ -24,7 +24,7 @@ var (
 	MembersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "member_id", Type: field.TypeString, Unique: true},
-		{Name: "email", Type: field.TypeString},
+		{Name: "email", Type: field.TypeString, Unique: true},
 		{Name: "picture", Type: field.TypeString},
 		{Name: "nickname", Type: field.TypeString},
 		{Name: "bio", Type: field.TypeString, Size: 2147483647},
@@ -57,6 +57,17 @@ var (
 			},
 		},
 	}
+	// SkillsColumns holds the columns for the "skills" table.
+	SkillsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+	}
+	// SkillsTable holds the schema information for the "skills" table.
+	SkillsTable = &schema.Table{
+		Name:       "skills",
+		Columns:    SkillsColumns,
+		PrimaryKey: []*schema.Column{SkillsColumns[0]},
+	}
 	// TeamsColumns holds the columns for the "teams" table.
 	TeamsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -84,16 +95,73 @@ var (
 		Columns:    TransientMembersColumns,
 		PrimaryKey: []*schema.Column{TransientMembersColumns[0]},
 	}
+	// SkillUsersColumns holds the columns for the "skill_users" table.
+	SkillUsersColumns = []*schema.Column{
+		{Name: "skill_id", Type: field.TypeInt},
+		{Name: "member_id", Type: field.TypeInt},
+	}
+	// SkillUsersTable holds the schema information for the "skill_users" table.
+	SkillUsersTable = &schema.Table{
+		Name:       "skill_users",
+		Columns:    SkillUsersColumns,
+		PrimaryKey: []*schema.Column{SkillUsersColumns[0], SkillUsersColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "skill_users_skill_id",
+				Columns:    []*schema.Column{SkillUsersColumns[0]},
+				RefColumns: []*schema.Column{SkillsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "skill_users_member_id",
+				Columns:    []*schema.Column{SkillUsersColumns[1]},
+				RefColumns: []*schema.Column{MembersColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
+	// SkillTeamsColumns holds the columns for the "skill_teams" table.
+	SkillTeamsColumns = []*schema.Column{
+		{Name: "skill_id", Type: field.TypeInt},
+		{Name: "team_id", Type: field.TypeInt},
+	}
+	// SkillTeamsTable holds the schema information for the "skill_teams" table.
+	SkillTeamsTable = &schema.Table{
+		Name:       "skill_teams",
+		Columns:    SkillTeamsColumns,
+		PrimaryKey: []*schema.Column{SkillTeamsColumns[0], SkillTeamsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "skill_teams_skill_id",
+				Columns:    []*schema.Column{SkillTeamsColumns[0]},
+				RefColumns: []*schema.Column{SkillsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:     "skill_teams_team_id",
+				Columns:    []*schema.Column{SkillTeamsColumns[1]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		AnnouncementsTable,
 		MembersTable,
 		PositionsTable,
+		SkillsTable,
 		TeamsTable,
 		TransientMembersTable,
+		SkillUsersTable,
+		SkillTeamsTable,
 	}
 )
 
 func init() {
 	PositionsTable.ForeignKeys[0].RefTable = TeamsTable
+	SkillUsersTable.ForeignKeys[0].RefTable = SkillsTable
+	SkillUsersTable.ForeignKeys[1].RefTable = MembersTable
+	SkillTeamsTable.ForeignKeys[0].RefTable = SkillsTable
+	SkillTeamsTable.ForeignKeys[1].RefTable = TeamsTable
 }

@@ -4,6 +4,7 @@ package ent
 
 import (
 	"backend_golang/ent/member"
+	"backend_golang/ent/skill"
 	"context"
 	"errors"
 	"fmt"
@@ -53,6 +54,21 @@ func (mc *MemberCreate) SetBio(s string) *MemberCreate {
 func (mc *MemberCreate) SetPreferredRole(s string) *MemberCreate {
 	mc.mutation.SetPreferredRole(s)
 	return mc
+}
+
+// AddSkillIDs adds the "skills" edge to the Skill entity by IDs.
+func (mc *MemberCreate) AddSkillIDs(ids ...int) *MemberCreate {
+	mc.mutation.AddSkillIDs(ids...)
+	return mc
+}
+
+// AddSkills adds the "skills" edges to the Skill entity.
+func (mc *MemberCreate) AddSkills(s ...*Skill) *MemberCreate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return mc.AddSkillIDs(ids...)
 }
 
 // Mutation returns the MemberMutation object of the builder.
@@ -156,6 +172,22 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 	if value, ok := mc.mutation.PreferredRole(); ok {
 		_spec.SetField(member.FieldPreferredRole, field.TypeString, value)
 		_node.PreferredRole = value
+	}
+	if nodes := mc.mutation.SkillsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

@@ -7,6 +7,7 @@ type CreateTeam struct {
 	Description string
 	Headcount   int8
 	Vacancies   []models.Vacancy
+	Skills      []string
 }
 
 type RegisterAnnouncement struct {

@@ -5,6 +5,7 @@ package ent
 import (
 	"backend_golang/ent/position"
 	"backend_golang/ent/predicate"
+	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
 	"context"
 	"database/sql/driver"
@@ -25,6 +26,7 @@ type TeamQuery struct {
 	inters        []Interceptor
 	predicates    []predicate.Team
 	withPositions *PositionQuery
+	withSkills    *SkillQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +78,28 @@ func (tq *TeamQuery) QueryPositions() *PositionQuery {
 			sqlgraph.From(team.Table, team.FieldID, selector),
 			sqlgraph.To(position.Table, position.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, team.PositionsTable, team.PositionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySkills chains the current query on the "skills" edge.
+func (tq *TeamQuery) QuerySkills() *SkillQuery {
+	query := (&SkillClient{config: tq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, selector),
+			sqlgraph.To(skill.Table, skill.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, team.SkillsTable, team.SkillsPrimaryKey...),
 		)
 		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
 		return fromU, nil
@@ -276,6 +300,7 @@ func (tq *TeamQuery) Clone() *TeamQuery {
 		inters:        append([]Interceptor{}, tq.inters...),
 		predicates:    append([]predicate.Team{}, tq.predicates...),
 		withPositions: tq.withPositions.Clone(),
+		withSkills:    tq.withSkills.Clone(),
 		// clone intermediate query.
 		sql:  tq.sql.Clone(),
 		path: tq.path,
@@ -290,6 +315,17 @@ func (tq *TeamQuery) WithPositions(opts ...func(*PositionQuery)) *TeamQuery {
 		opt(query)
 	}
 	tq.withPositions = query
+	return tq
+}
+
+// WithSkills tells the query-builder to eager-load the nodes that are connected to
+// the "skills" edge. The optional arguments are used to configure the query builder of the edge.
+func (tq *TeamQuery) WithSkills(opts ...func(*SkillQuery)) *TeamQuery {
+	query := (&SkillClient{config: tq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withSkills = query
 	return tq
 }
 
@@ -371,8 +407,9 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 	var (
 		nodes       = []*Team{}
 		_spec       = tq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			tq.withPositions != nil,
+			tq.withSkills != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -397,6 +434,13 @@ func (tq *TeamQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Team, e
 		if err := tq.loadPositions(ctx, query, nodes,
 			func(n *Team) { n.Edges.Positions = []*Position{} },
 			func(n *Team, e *Position) { n.Edges.Positions = append(n.Edges.Positions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := tq.withSkills; query != nil {
+		if err := tq.loadSkills(ctx, query, nodes,
+			func(n *Team) { n.Edges.Skills = []*Skill{} },
+			func(n *Team, e *Skill) { n.Edges.Skills = append(n.Edges.Skills, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -430,6 +474,67 @@ func (tq *TeamQuery) loadPositions(ctx context.Context, query *PositionQuery, no
 			return fmt.Errorf(`unexpected referenced foreign-key "team_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (tq *TeamQuery) loadSkills(ctx context.Context, query *SkillQuery, nodes []*Team, init func(*Team), assign func(*Team, *Skill)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Team)
+	nids := make(map[int]map[*Team]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(team.SkillsTable)
+		s.Join(joinT).On(s.C(skill.FieldID), joinT.C(team.SkillsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(team.SkillsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(team.SkillsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Team]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Skill](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "skills" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
 	}
 	return nil
 }

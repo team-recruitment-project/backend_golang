@@ -5,7 +5,9 @@ package ent
 import (
 	"backend_golang/ent/member"
 	"backend_golang/ent/predicate"
+	"backend_golang/ent/skill"
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"math"
 
@@ -22,6 +24,7 @@ type MemberQuery struct {
 	order      []member.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Member
+	withSkills *SkillQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -56,6 +59,28 @@ func (mq *MemberQuery) Unique(unique bool) *MemberQuery {
 func (mq *MemberQuery) Order(o ...member.OrderOption) *MemberQuery {
 	mq.order = append(mq.order, o...)
 	return mq
+}
+
+// QuerySkills chains the current query on the "skills" edge.
+func (mq *MemberQuery) QuerySkills() *SkillQuery {
+	query := (&SkillClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(member.Table, member.FieldID, selector),
+			sqlgraph.To(skill.Table, skill.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, true, member.SkillsTable, member.SkillsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Member entity from the query.
@@ -250,10 +275,22 @@ func (mq *MemberQuery) Clone() *MemberQuery {
 		order:      append([]member.OrderOption{}, mq.order...),
 		inters:     append([]Interceptor{}, mq.inters...),
 		predicates: append([]predicate.Member{}, mq.predicates...),
+		withSkills: mq.withSkills.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
 	}
+}
+
+// WithSkills tells the query-builder to eager-load the nodes that are connected to
+// the "skills" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MemberQuery) WithSkills(opts ...func(*SkillQuery)) *MemberQuery {
+	query := (&SkillClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withSkills = query
+	return mq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -332,8 +369,11 @@ func (mq *MemberQuery) prepareQuery(ctx context.Context) error {
 
 func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Member, error) {
 	var (
-		nodes = []*Member{}
-		_spec = mq.querySpec()
+		nodes       = []*Member{}
+		_spec       = mq.querySpec()
+		loadedTypes = [1]bool{
+			mq.withSkills != nil,
+		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Member).scanValues(nil, columns)
@@ -341,6 +381,7 @@ func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membe
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Member{config: mq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -352,7 +393,76 @@ func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membe
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := mq.withSkills; query != nil {
+		if err := mq.loadSkills(ctx, query, nodes,
+			func(n *Member) { n.Edges.Skills = []*Skill{} },
+			func(n *Member, e *Skill) { n.Edges.Skills = append(n.Edges.Skills, e) }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (mq *MemberQuery) loadSkills(ctx context.Context, query *SkillQuery, nodes []*Member, init func(*Member), assign func(*Member, *Skill)) error {
+	edgeIDs := make([]driver.Value, len(nodes))
+	byID := make(map[int]*Member)
+	nids := make(map[int]map[*Member]struct{})
+	for i, node := range nodes {
+		edgeIDs[i] = node.ID
+		byID[node.ID] = node
+		if init != nil {
+			init(node)
+		}
+	}
+	query.Where(func(s *sql.Selector) {
+		joinT := sql.Table(member.SkillsTable)
+		s.Join(joinT).On(s.C(skill.FieldID), joinT.C(member.SkillsPrimaryKey[0]))
+		s.Where(sql.InValues(joinT.C(member.SkillsPrimaryKey[1]), edgeIDs...))
+		columns := s.SelectedColumns()
+		s.Select(joinT.C(member.SkillsPrimaryKey[1]))
+		s.AppendSelect(columns...)
+		s.SetDistinct(false)
+	})
+	if err := query.prepareQuery(ctx); err != nil {
+		return err
+	}
+	qr := QuerierFunc(func(ctx context.Context, q Query) (Value, error) {
+		return query.sqlAll(ctx, func(_ context.Context, spec *sqlgraph.QuerySpec) {
+			assign := spec.Assign
+			values := spec.ScanValues
+			spec.ScanValues = func(columns []string) ([]any, error) {
+				values, err := values(columns[1:])
+				if err != nil {
+					return nil, err
+				}
+				return append([]any{new(sql.NullInt64)}, values...), nil
+			}
+			spec.Assign = func(columns []string, values []any) error {
+				outValue := int(values[0].(*sql.NullInt64).Int64)
+				inValue := int(values[1].(*sql.NullInt64).Int64)
+				if nids[inValue] == nil {
+					nids[inValue] = map[*Member]struct{}{byID[outValue]: {}}
+					return assign(columns[1:], values[1:])
+				}
+				nids[inValue][byID[outValue]] = struct{}{}
+				return nil
+			}
+		})
+	})
+	neighbors, err := withInterceptors[[]*Skill](ctx, query, qr, query.inters)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected "skills" node returned %v`, n.ID)
+		}
+		for kn := range nodes {
+			assign(kn, n)
+		}
+	}
+	return nil
 }
 
 func (mq *MemberQuery) sqlCount(ctx context.Context) (int, error) {

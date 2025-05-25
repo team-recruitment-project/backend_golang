@@ -12,6 +12,7 @@ type MakeTeamRequest struct {
 	Description string           `json:"description" validate:"required,min=1,notblank"`
 	Headcount   int8             `json:"headcount"`
 	Vacancies   []models.Vacancy `json:"vacancies" validate:"required,min=1,dive"`
+	Skills      []string         `json:"skills" validate:"required,min=1,dive,notblank"`
 }
 
 type PostAnnouncement struct {

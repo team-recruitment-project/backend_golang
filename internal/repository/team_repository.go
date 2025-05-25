@@ -3,11 +3,12 @@ package repository
 import (
 	"backend_golang/ent"
 	"backend_golang/ent/position"
+	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
 	"backend_golang/internal/domain"
 	"backend_golang/internal/service/models"
 	"context"
-	"fmt"
+	"log"
 )
 
 type TeamRepository interface {
@@ -30,18 +31,31 @@ func NewTeamRepository(client *ent.Client) TeamRepository {
 
 func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error) {
 	// TODO : createTeam 을 서비스의 dto 가 아니라 리포지토리단의 domain 모델로 변경
-	// Validate input
-	if createTeam.TeamName == "" {
-		return nil, fmt.Errorf("team name cannot be empty")
-	}
-	for _, vacancy := range createTeam.Vacancies {
-		if vacancy.Role == "" {
-			return nil, fmt.Errorf("role cannot be empty")
-		}
-	}
-
 	var result *domain.Team
 	err := t.tx.WithTx(ctx, func(tx *ent.Tx) error {
+
+		// 技術スタックがあるか探し、なければ作成する
+		var skills []*ent.Skill
+		for _, s := range createTeam.Skills {
+			// TODO skill repository に移行するのが良いかも
+			foundSkill, err := tx.Skill.Query().Where(skill.Name(s)).First(ctx)
+			if err != nil {
+				if ent.IsNotFound(err) {
+					// TODO skill repository に移行するのが良いかも
+					foundSkill, err = tx.Skill.Create().
+						SetName(s).
+						Save(ctx)
+					if err != nil {
+						log.Printf("error creating skill: %v", err)
+						return err
+					}
+				} else {
+					return err
+				}
+			}
+			skills = append(skills, foundSkill)
+		}
+
 		positions := []*ent.Position{}
 		for _, vacancy := range createTeam.Vacancies {
 			savedPosition, err := tx.Position.Create().
@@ -59,6 +73,7 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			SetDescription(createTeam.Description).
 			SetHeadcount(createTeam.Headcount).
 			AddPositions(positions...).
+			AddSkills(skills...).
 			Save(ctx)
 		if err != nil {
 			return err
@@ -69,16 +84,23 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			positionIDs[i] = position.ID
 		}
 
+		skillIDs := make([]int, len(team.Edges.Skills))
+		for i, skill := range team.Edges.Skills {
+			skillIDs[i] = skill.ID
+		}
+
 		result = &domain.Team{
 			ID:          team.ID,
 			Name:        team.Name,
 			Description: team.Description,
 			Headcount:   team.Headcount,
 			Positions:   positionIDs,
+			Skills:      skillIDs,
 		}
 		return nil
 	})
 	if err != nil {
+		log.Printf("error creating team: %v", err)
 		return nil, err
 	}
 	return result, nil

@@ -32,9 +32,11 @@ type Team struct {
 type TeamEdges struct {
 	// Positions holds the value of the positions edge.
 	Positions []*Position `json:"positions,omitempty"`
+	// Skills holds the value of the skills edge.
+	Skills []*Skill `json:"skills,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // PositionsOrErr returns the Positions value or an error if the edge
@@ -44,6 +46,15 @@ func (e TeamEdges) PositionsOrErr() ([]*Position, error) {
 		return e.Positions, nil
 	}
 	return nil, &NotLoadedError{edge: "positions"}
+}
+
+// SkillsOrErr returns the Skills value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) SkillsOrErr() ([]*Skill, error) {
+	if e.loadedTypes[1] {
+		return e.Skills, nil
+	}
+	return nil, &NotLoadedError{edge: "skills"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -110,6 +121,11 @@ func (t *Team) Value(name string) (ent.Value, error) {
 // QueryPositions queries the "positions" edge of the Team entity.
 func (t *Team) QueryPositions() *PositionQuery {
 	return NewTeamClient(t.config).QueryPositions(t)
+}
+
+// QuerySkills queries the "skills" edge of the Team entity.
+func (t *Team) QuerySkills() *SkillQuery {
+	return NewTeamClient(t.config).QuerySkills(t)
 }
 
 // Update returns a builder for updating this Team.

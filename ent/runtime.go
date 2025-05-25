@@ -5,6 +5,7 @@ package ent
 import (
 	"backend_golang/ent/announcement"
 	"backend_golang/ent/schema"
+	"backend_golang/ent/skill"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -21,4 +22,10 @@ func init() {
 	announcementDescContent := announcementFields[1].Descriptor()
 	// announcement.ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	announcement.ContentValidator = announcementDescContent.Validators[0].(func(string) error)
+	skillFields := schema.Skill{}.Fields()
+	_ = skillFields
+	// skillDescName is the schema descriptor for name field.
+	skillDescName := skillFields[0].Descriptor()
+	// skill.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	skill.NameValidator = skillDescName.Validators[0].(func(string) error)
 }

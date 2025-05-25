@@ -18,6 +18,8 @@ type Tx struct {
 	Member *MemberClient
 	// Position is the client for interacting with the Position builders.
 	Position *PositionClient
+	// Skill is the client for interacting with the Skill builders.
+	Skill *SkillClient
 	// Team is the client for interacting with the Team builders.
 	Team *TeamClient
 	// TransientMember is the client for interacting with the TransientMember builders.
@@ -156,6 +158,7 @@ func (tx *Tx) init() {
 	tx.Announcement = NewAnnouncementClient(tx.config)
 	tx.Member = NewMemberClient(tx.config)
 	tx.Position = NewPositionClient(tx.config)
+	tx.Skill = NewSkillClient(tx.config)
 	tx.Team = NewTeamClient(tx.config)
 	tx.TransientMember = NewTransientMemberClient(tx.config)
 }

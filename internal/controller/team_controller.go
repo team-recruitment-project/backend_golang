@@ -50,6 +50,7 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 			Description: req.Description,
 			Headcount:   req.Headcount,
 			Vacancies:   req.Vacancies,
+			Skills:      req.Skills,
 		})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

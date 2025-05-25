@@ -4,6 +4,7 @@ package member
 
 import (
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 )
 
 const (
@@ -23,8 +24,15 @@ const (
 	FieldBio = "bio"
 	// FieldPreferredRole holds the string denoting the preferred_role field in the database.
 	FieldPreferredRole = "preferred_role"
+	// EdgeSkills holds the string denoting the skills edge name in mutations.
+	EdgeSkills = "skills"
 	// Table holds the table name of the member in the database.
 	Table = "members"
+	// SkillsTable is the table that holds the skills relation/edge. The primary key declared below.
+	SkillsTable = "skill_users"
+	// SkillsInverseTable is the table name for the Skill entity.
+	// It exists in this package in order to avoid circular dependency with the "skill" package.
+	SkillsInverseTable = "skills"
 )
 
 // Columns holds all SQL columns for member fields.
@@ -37,6 +45,12 @@ var Columns = []string{
 	FieldBio,
 	FieldPreferredRole,
 }
+
+var (
+	// SkillsPrimaryKey and SkillsColumn2 are the table columns denoting the
+	// primary key for the skills relation (M2M).
+	SkillsPrimaryKey = []string{"skill_id", "member_id"}
+)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -84,4 +98,25 @@ func ByBio(opts ...sql.OrderTermOption) OrderOption {
 // ByPreferredRole orders the results by the preferred_role field.
 func ByPreferredRole(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPreferredRole, opts...).ToFunc()
+}
+
+// BySkillsCount orders the results by skills count.
+func BySkillsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSkillsStep(), opts...)
+	}
+}
+
+// BySkills orders the results by skills terms.
+func BySkills(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSkillsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newSkillsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SkillsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, SkillsTable, SkillsPrimaryKey...),
+	)
 }

@@ -28,7 +28,28 @@ type Member struct {
 	Bio string `json:"bio,omitempty"`
 	// PreferredRole holds the value of the "preferred_role" field.
 	PreferredRole string `json:"preferred_role,omitempty"`
-	selectValues  sql.SelectValues
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the MemberQuery when eager-loading is set.
+	Edges        MemberEdges `json:"edges"`
+	selectValues sql.SelectValues
+}
+
+// MemberEdges holds the relations/edges for other nodes in the graph.
+type MemberEdges struct {
+	// Skills holds the value of the skills edge.
+	Skills []*Skill `json:"skills,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// SkillsOrErr returns the Skills value or an error if the edge
+// was not loaded in eager-loading.
+func (e MemberEdges) SkillsOrErr() ([]*Skill, error) {
+	if e.loadedTypes[0] {
+		return e.Skills, nil
+	}
+	return nil, &NotLoadedError{edge: "skills"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -108,6 +129,11 @@ func (m *Member) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (m *Member) Value(name string) (ent.Value, error) {
 	return m.selectValues.Get(name)
+}
+
+// QuerySkills queries the "skills" edge of the Member entity.
+func (m *Member) QuerySkills() *SkillQuery {
+	return NewMemberClient(m.config).QuerySkills(m)
 }
 
 // Update returns a builder for updating this Member.

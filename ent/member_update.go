@@ -5,6 +5,7 @@ package ent
 import (
 	"backend_golang/ent/member"
 	"backend_golang/ent/predicate"
+	"backend_golang/ent/skill"
 	"context"
 	"errors"
 	"fmt"
@@ -111,9 +112,45 @@ func (mu *MemberUpdate) SetNillablePreferredRole(s *string) *MemberUpdate {
 	return mu
 }
 
+// AddSkillIDs adds the "skills" edge to the Skill entity by IDs.
+func (mu *MemberUpdate) AddSkillIDs(ids ...int) *MemberUpdate {
+	mu.mutation.AddSkillIDs(ids...)
+	return mu
+}
+
+// AddSkills adds the "skills" edges to the Skill entity.
+func (mu *MemberUpdate) AddSkills(s ...*Skill) *MemberUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return mu.AddSkillIDs(ids...)
+}
+
 // Mutation returns the MemberMutation object of the builder.
 func (mu *MemberUpdate) Mutation() *MemberMutation {
 	return mu.mutation
+}
+
+// ClearSkills clears all "skills" edges to the Skill entity.
+func (mu *MemberUpdate) ClearSkills() *MemberUpdate {
+	mu.mutation.ClearSkills()
+	return mu
+}
+
+// RemoveSkillIDs removes the "skills" edge to Skill entities by IDs.
+func (mu *MemberUpdate) RemoveSkillIDs(ids ...int) *MemberUpdate {
+	mu.mutation.RemoveSkillIDs(ids...)
+	return mu
+}
+
+// RemoveSkills removes "skills" edges to Skill entities.
+func (mu *MemberUpdate) RemoveSkills(s ...*Skill) *MemberUpdate {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return mu.RemoveSkillIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -169,6 +206,51 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := mu.mutation.PreferredRole(); ok {
 		_spec.SetField(member.FieldPreferredRole, field.TypeString, value)
+	}
+	if mu.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.RemovedSkillsIDs(); len(nodes) > 0 && !mu.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.SkillsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, mu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -274,9 +356,45 @@ func (muo *MemberUpdateOne) SetNillablePreferredRole(s *string) *MemberUpdateOne
 	return muo
 }
 
+// AddSkillIDs adds the "skills" edge to the Skill entity by IDs.
+func (muo *MemberUpdateOne) AddSkillIDs(ids ...int) *MemberUpdateOne {
+	muo.mutation.AddSkillIDs(ids...)
+	return muo
+}
+
+// AddSkills adds the "skills" edges to the Skill entity.
+func (muo *MemberUpdateOne) AddSkills(s ...*Skill) *MemberUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return muo.AddSkillIDs(ids...)
+}
+
 // Mutation returns the MemberMutation object of the builder.
 func (muo *MemberUpdateOne) Mutation() *MemberMutation {
 	return muo.mutation
+}
+
+// ClearSkills clears all "skills" edges to the Skill entity.
+func (muo *MemberUpdateOne) ClearSkills() *MemberUpdateOne {
+	muo.mutation.ClearSkills()
+	return muo
+}
+
+// RemoveSkillIDs removes the "skills" edge to Skill entities by IDs.
+func (muo *MemberUpdateOne) RemoveSkillIDs(ids ...int) *MemberUpdateOne {
+	muo.mutation.RemoveSkillIDs(ids...)
+	return muo
+}
+
+// RemoveSkills removes "skills" edges to Skill entities.
+func (muo *MemberUpdateOne) RemoveSkills(s ...*Skill) *MemberUpdateOne {
+	ids := make([]int, len(s))
+	for i := range s {
+		ids[i] = s[i].ID
+	}
+	return muo.RemoveSkillIDs(ids...)
 }
 
 // Where appends a list predicates to the MemberUpdate builder.
@@ -362,6 +480,51 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 	}
 	if value, ok := muo.mutation.PreferredRole(); ok {
 		_spec.SetField(member.FieldPreferredRole, field.TypeString, value)
+	}
+	if muo.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.RemovedSkillsIDs(); len(nodes) > 0 && !muo.mutation.SkillsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.SkillsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   member.SkillsTable,
+			Columns: member.SkillsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Member{config: muo.config}
 	_spec.Assign = _node.assignValues

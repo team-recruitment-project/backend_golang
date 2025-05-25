@@ -15,6 +15,9 @@ type Member func(*sql.Selector)
 // Position is the predicate function for position builders.
 type Position func(*sql.Selector)
 
+// Skill is the predicate function for skill builders.
+type Skill func(*sql.Selector)
+
 // Team is the predicate function for team builders.
 type Team func(*sql.Selector)
 

@@ -6,6 +6,7 @@ import (
 	"backend_golang/ent/announcement"
 	"backend_golang/ent/member"
 	"backend_golang/ent/position"
+	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
 	"backend_golang/ent/transientmember"
 	"context"
@@ -80,6 +81,7 @@ func checkColumn(table, column string) error {
 			announcement.Table:    announcement.ValidColumn,
 			member.Table:          member.ValidColumn,
 			position.Table:        position.ValidColumn,
+			skill.Table:           skill.ValidColumn,
 			team.Table:            team.ValidColumn,
 			transientmember.Table: transientmember.ValidColumn,
 		})
