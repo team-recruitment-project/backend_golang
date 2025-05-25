@@ -98,6 +98,43 @@ paths:
                     type: string
                     example: "内部サーバーエラーが発生しました"
 
+  /v1/me:
+    get:
+      summary: メンバー情報取得
+      description: 現在ログインしているユーザーのメンバー情報を取得するエンドポイント
+      operationId: getMember
+      tags:
+        - 認証
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: メンバー情報取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "認証が必要です"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "内部サーバーエラーが発生しました"
+
 components:
   schemas:
     SignUpRequest:
@@ -126,6 +163,38 @@ components:
           type: string
           description: エラーメッセージ
           example: "自己紹介は必須です"
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          description: メンバーID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          description: メールアドレス
+          example: "user@example.com"
+        nickname:
+          type: string
+          description: ニックネーム
+          example: "John Doe"
+        picture:
+          type: string
+          description: プロフィール画像URL
+          example: "https://example.com/profile.jpg"
+        bio:
+          type: string
+          description: 自己紹介
+          example: "バックエンドエンジニアとして3年の経験があります"
+        preferred_role:
+          type: string
+          description: 希望する役割
+          enum: [FRONTEND, BACKEND, INFRA, DESIGNER, MANAGER, FULLSTACK, MOBILE]
+          example: "BACKEND"
+        transient:
+          type: boolean
+          description: 仮登録状態かどうか
+          example: false
 
   securitySchemes:
     BearerAuth:

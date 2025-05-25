@@ -51,7 +51,7 @@ func main() {
 	app.GET("/v1/auth/login", authController.Login)
 	app.GET("/login/oauth2/code/google", authController.GoogleCallback)
 	app.POST("/v1/auth/signup", authController.Signup, middleware.Authentication())
-	app.GET("/v1/me", authController.GetUser, middleware.Authentication())
+	app.GET("/v1/me", authController.GetMember, middleware.Authentication())
 
 	app.Run(":8080")
 }

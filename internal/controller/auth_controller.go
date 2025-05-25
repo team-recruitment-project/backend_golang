@@ -16,7 +16,7 @@ type AuthController interface {
 	Login(c *gin.Context)
 	GoogleCallback(c *gin.Context)
 	Signup(c *gin.Context)
-	GetUser(c *gin.Context)
+	GetMember(c *gin.Context)
 }
 
 type authController struct {
@@ -91,7 +91,7 @@ func (a *authController) Signup(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"memberID": memberID})
 }
 
-func (a *authController) GetUser(c *gin.Context) {
+func (a *authController) GetMember(c *gin.Context) {
 	userID, exists := c.Get("userID")
 	if !exists || userID == "" {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
