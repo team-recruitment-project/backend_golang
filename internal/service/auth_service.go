@@ -10,14 +10,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthService interface {
 	Login(c context.Context) models.LoginResponse
-	GoogleCallback(c *gin.Context, code string) (string, error)
-	Signup(c *gin.Context, userID string, signup models.SignupMember) (error, string)
+	GoogleCallback(c context.Context, code string) (string, error)
+	Signup(c context.Context, userID string, signup models.SignupMember) (string, error)
+	GetMember(c context.Context, userID string) (*models.UserResponse, error)
 }
 
 type authService struct {
@@ -37,7 +37,7 @@ func (a *authService) Login(c context.Context) models.LoginResponse {
 	}
 }
 
-func (a *authService) GoogleCallback(c *gin.Context, code string) (string, error) {
+func (a *authService) GoogleCallback(c context.Context, code string) (string, error) {
 	token, err := config.OAuthConfig.GetAccessToken(c, code)
 	if err != nil {
 		return "", err
@@ -75,15 +75,43 @@ func (a *authService) GoogleCallback(c *gin.Context, code string) (string, error
 	return accessToken, nil
 }
 
-func (a *authService) Signup(c *gin.Context, userID string, signup models.SignupMember) (error, string) {
+func (a *authService) Signup(c context.Context, userID string, signup models.SignupMember) (string, error) {
 	member, err := a.authRepository.CreateMember(c, &domain.Member{
 		ID:            userID,
 		Bio:           signup.Bio,
 		PreferredRole: string(signup.PreferredRole),
 	})
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 
-	return nil, member.ID
+	return member.ID, nil
+}
+
+func (a *authService) GetMember(c context.Context, userID string) (*models.UserResponse, error) {
+	member, err := a.authRepository.GetMemberByID(c, userID)
+
+	if err != nil {
+		if ent.IsNotFound(err) {
+			transientMember, err := a.authRepository.GetTransientMemberByID(c, userID)
+			if err != nil {
+				return nil, err
+			}
+			return &models.UserResponse{
+				ID:        transientMember.ID,
+				Transient: true,
+			}, nil
+		}
+		return nil, err
+	}
+
+	return &models.UserResponse{
+		ID:            member.ID,
+		Email:         member.Email,
+		Nickname:      member.Nickname,
+		Picture:       member.Picture,
+		Bio:           member.Bio,
+		PreferredRole: member.PreferredRole,
+		Transient:     false,
+	}, nil
 }

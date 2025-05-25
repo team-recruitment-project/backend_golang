@@ -16,6 +16,7 @@ type AuthController interface {
 	Login(c *gin.Context)
 	GoogleCallback(c *gin.Context)
 	Signup(c *gin.Context)
+	GetUser(c *gin.Context)
 }
 
 type authController struct {
@@ -81,11 +82,27 @@ func (a *authController) Signup(c *gin.Context) {
 		Bio:           req.Bio,
 		PreferredRole: models.Role(req.PreferredRole),
 	}
-	err, memberID := a.authService.Signup(c, userID, signup)
+	memberID, err := a.authService.Signup(c, userID, signup)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"memberID": memberID})
+}
+
+func (a *authController) GetUser(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	member, err := a.authService.GetMember(c, userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, member)
 }

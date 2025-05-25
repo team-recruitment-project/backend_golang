@@ -22,3 +22,13 @@ type SignupMember struct {
 type LoginResponse struct {
 	URL string `json:"url"`
 }
+
+type UserResponse struct {
+	ID            string `json:"id"`
+	Email         string `json:"email"`
+	Nickname      string `json:"nickname"`
+	Picture       string `json:"picture"`
+	Bio           string `json:"bio"`
+	PreferredRole string `json:"preferred_role"`
+	Transient     bool   `json:"transient"`
+}

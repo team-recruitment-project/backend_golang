@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend_golang/ent"
+	"backend_golang/ent/member"
 	"backend_golang/ent/transientmember"
 	"backend_golang/internal/domain"
 	"context"
@@ -13,6 +14,7 @@ type AuthRepository interface {
 	CreateTransientMember(c context.Context, member *domain.TransientMember) (*domain.TransientMember, error)
 	GetTransientMemberByID(c context.Context, id string) (*domain.TransientMember, error)
 	CreateMember(c context.Context, member *domain.Member) (*domain.Member, error)
+	GetMemberByID(c context.Context, id string) (*domain.Member, error)
 }
 
 type authRepository struct {
@@ -114,4 +116,21 @@ func (a *authRepository) CreateMember(c context.Context, member *domain.Member) 
 		return nil
 	})
 	return result, err
+}
+
+func (a *authRepository) GetMemberByID(c context.Context, id string) (*domain.Member, error) {
+	member, err := a.client.Member.Query().Where(member.MemberID(id)).First(c)
+	if err != nil {
+		log.Printf("error getting member by id: %v", err)
+		return nil, err
+	}
+
+	return &domain.Member{
+		ID:            member.MemberID,
+		Email:         member.Email,
+		Picture:       member.Picture,
+		Nickname:      member.Nickname,
+		Bio:           member.Bio,
+		PreferredRole: member.PreferredRole,
+	}, nil
 }
