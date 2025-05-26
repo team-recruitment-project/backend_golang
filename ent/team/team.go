@@ -18,6 +18,8 @@ const (
 	FieldDescription = "description"
 	// FieldHeadcount holds the string denoting the headcount field in the database.
 	FieldHeadcount = "headcount"
+	// FieldCreatedBy holds the string denoting the created_by field in the database.
+	FieldCreatedBy = "created_by"
 	// EdgePositions holds the string denoting the positions edge name in mutations.
 	EdgePositions = "positions"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
@@ -53,6 +55,7 @@ var Columns = []string{
 	FieldName,
 	FieldDescription,
 	FieldHeadcount,
+	FieldCreatedBy,
 }
 
 var (
@@ -70,6 +73,11 @@ func ValidColumn(column string) bool {
 	}
 	return false
 }
+
+var (
+	// CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	CreatedByValidator func(string) error
+)
 
 // OrderOption defines the ordering options for the Team queries.
 type OrderOption func(*sql.Selector)
@@ -92,6 +100,11 @@ func ByDescription(opts ...sql.OrderTermOption) OrderOption {
 // ByHeadcount orders the results by the headcount field.
 func ByHeadcount(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldHeadcount, opts...).ToFunc()
+}
+
+// ByCreatedBy orders the results by the created_by field.
+func ByCreatedBy(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCreatedBy, opts...).ToFunc()
 }
 
 // ByPositionsCount orders the results by positions count.

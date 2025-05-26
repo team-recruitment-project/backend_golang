@@ -2222,6 +2222,7 @@ type TeamMutation struct {
 	description      *string
 	headcount        *int8
 	addheadcount     *int8
+	created_by       *string
 	clearedFields    map[string]struct{}
 	positions        map[int]struct{}
 	removedpositions map[int]struct{}
@@ -2463,6 +2464,42 @@ func (m *TeamMutation) ResetHeadcount() {
 	m.addheadcount = nil
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (m *TeamMutation) SetCreatedBy(s string) {
+	m.created_by = &s
+}
+
+// CreatedBy returns the value of the "created_by" field in the mutation.
+func (m *TeamMutation) CreatedBy() (r string, exists bool) {
+	v := m.created_by
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedBy returns the old "created_by" field's value of the Team entity.
+// If the Team object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TeamMutation) OldCreatedBy(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedBy is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedBy requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedBy: %w", err)
+	}
+	return oldValue.CreatedBy, nil
+}
+
+// ResetCreatedBy resets all changes to the "created_by" field.
+func (m *TeamMutation) ResetCreatedBy() {
+	m.created_by = nil
+}
+
 // AddPositionIDs adds the "positions" edge to the Position entity by ids.
 func (m *TeamMutation) AddPositionIDs(ids ...int) {
 	if m.positions == nil {
@@ -2659,7 +2696,7 @@ func (m *TeamMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TeamMutation) Fields() []string {
-	fields := make([]string, 0, 3)
+	fields := make([]string, 0, 4)
 	if m.name != nil {
 		fields = append(fields, team.FieldName)
 	}
@@ -2668,6 +2705,9 @@ func (m *TeamMutation) Fields() []string {
 	}
 	if m.headcount != nil {
 		fields = append(fields, team.FieldHeadcount)
+	}
+	if m.created_by != nil {
+		fields = append(fields, team.FieldCreatedBy)
 	}
 	return fields
 }
@@ -2683,6 +2723,8 @@ func (m *TeamMutation) Field(name string) (ent.Value, bool) {
 		return m.Description()
 	case team.FieldHeadcount:
 		return m.Headcount()
+	case team.FieldCreatedBy:
+		return m.CreatedBy()
 	}
 	return nil, false
 }
@@ -2698,6 +2740,8 @@ func (m *TeamMutation) OldField(ctx context.Context, name string) (ent.Value, er
 		return m.OldDescription(ctx)
 	case team.FieldHeadcount:
 		return m.OldHeadcount(ctx)
+	case team.FieldCreatedBy:
+		return m.OldCreatedBy(ctx)
 	}
 	return nil, fmt.Errorf("unknown Team field %s", name)
 }
@@ -2727,6 +2771,13 @@ func (m *TeamMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetHeadcount(v)
+		return nil
+	case team.FieldCreatedBy:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedBy(v)
 		return nil
 	}
 	return fmt.Errorf("unknown Team field %s", name)
@@ -2800,6 +2851,9 @@ func (m *TeamMutation) ResetField(name string) error {
 		return nil
 	case team.FieldHeadcount:
 		m.ResetHeadcount()
+		return nil
+	case team.FieldCreatedBy:
+		m.ResetCreatedBy()
 		return nil
 	}
 	return fmt.Errorf("unknown Team field %s", name)

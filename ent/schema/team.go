@@ -17,6 +17,7 @@ func (Team) Fields() []ent.Field {
 		field.String("name").Unique(),
 		field.Text("description"),
 		field.Int8("headcount"),
+		field.String("created_by").Unique().NotEmpty(),
 	}
 }
 

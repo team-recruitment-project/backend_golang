@@ -22,6 +22,8 @@ type Team struct {
 	Description string `json:"description,omitempty"`
 	// Headcount holds the value of the "headcount" field.
 	Headcount int8 `json:"headcount,omitempty"`
+	// CreatedBy holds the value of the "created_by" field.
+	CreatedBy string `json:"created_by,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TeamQuery when eager-loading is set.
 	Edges        TeamEdges `json:"edges"`
@@ -75,7 +77,7 @@ func (*Team) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case team.FieldID, team.FieldHeadcount:
 			values[i] = new(sql.NullInt64)
-		case team.FieldName, team.FieldDescription:
+		case team.FieldName, team.FieldDescription, team.FieldCreatedBy:
 			values[i] = new(sql.NullString)
 		default:
 			values[i] = new(sql.UnknownType)
@@ -115,6 +117,12 @@ func (t *Team) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field headcount", values[i])
 			} else if value.Valid {
 				t.Headcount = int8(value.Int64)
+			}
+		case team.FieldCreatedBy:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field created_by", values[i])
+			} else if value.Valid {
+				t.CreatedBy = value.String
 			}
 		default:
 			t.selectValues.Set(columns[i], values[i])
@@ -175,6 +183,9 @@ func (t *Team) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("headcount=")
 	builder.WriteString(fmt.Sprintf("%v", t.Headcount))
+	builder.WriteString(", ")
+	builder.WriteString("created_by=")
+	builder.WriteString(t.CreatedBy)
 	builder.WriteByte(')')
 	return builder.String()
 }

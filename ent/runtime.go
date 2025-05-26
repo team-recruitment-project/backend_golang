@@ -6,6 +6,7 @@ import (
 	"backend_golang/ent/announcement"
 	"backend_golang/ent/schema"
 	"backend_golang/ent/skill"
+	"backend_golang/ent/team"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -28,4 +29,10 @@ func init() {
 	skillDescName := skillFields[0].Descriptor()
 	// skill.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	skill.NameValidator = skillDescName.Validators[0].(func(string) error)
+	teamFields := schema.Team{}.Fields()
+	_ = teamFields
+	// teamDescCreatedBy is the schema descriptor for created_by field.
+	teamDescCreatedBy := teamFields[3].Descriptor()
+	// team.CreatedByValidator is a validator for the "created_by" field. It is called by the builders before save.
+	team.CreatedByValidator = teamDescCreatedBy.Validators[0].(func(string) error)
 }

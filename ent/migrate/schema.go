@@ -83,6 +83,7 @@ var (
 		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "description", Type: field.TypeString, Size: 2147483647},
 		{Name: "headcount", Type: field.TypeInt8},
+		{Name: "created_by", Type: field.TypeString, Unique: true},
 	}
 	// TeamsTable holds the schema information for the "teams" table.
 	TeamsTable = &schema.Table{

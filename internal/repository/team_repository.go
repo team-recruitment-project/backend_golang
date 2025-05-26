@@ -73,6 +73,7 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			SetName(createTeam.TeamName).
 			SetDescription(createTeam.Description).
 			SetHeadcount(createTeam.Headcount).
+			SetCreatedBy(createTeam.MemberID).
 			AddPositions(positions...).
 			AddSkills(skills...).
 			Save(ctx)
@@ -106,6 +107,7 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			Name:        team.Name,
 			Description: team.Description,
 			Headcount:   team.Headcount,
+			CreatedBy:   team.CreatedBy,
 			Positions:   positionIDs,
 			Skills:      skillIDs,
 		}

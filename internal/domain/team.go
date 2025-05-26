@@ -5,6 +5,7 @@ type Team struct {
 	Name        string
 	Description string
 	Headcount   int8
+	CreatedBy   string
 	Positions   []int
 	Skills      []int
 }

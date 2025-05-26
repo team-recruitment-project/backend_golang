@@ -79,6 +79,20 @@ func (tu *TeamUpdate) AddHeadcount(i int8) *TeamUpdate {
 	return tu
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (tu *TeamUpdate) SetCreatedBy(s string) *TeamUpdate {
+	tu.mutation.SetCreatedBy(s)
+	return tu
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (tu *TeamUpdate) SetNillableCreatedBy(s *string) *TeamUpdate {
+	if s != nil {
+		tu.SetCreatedBy(*s)
+	}
+	return tu
+}
+
 // AddPositionIDs adds the "positions" edge to the Position entity by IDs.
 func (tu *TeamUpdate) AddPositionIDs(ids ...int) *TeamUpdate {
 	tu.mutation.AddPositionIDs(ids...)
@@ -219,7 +233,20 @@ func (tu *TeamUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (tu *TeamUpdate) check() error {
+	if v, ok := tu.mutation.CreatedBy(); ok {
+		if err := team.CreatedByValidator(v); err != nil {
+			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "Team.created_by": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := tu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(team.Table, team.Columns, sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt))
 	if ps := tu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -239,6 +266,9 @@ func (tu *TeamUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := tu.mutation.AddedHeadcount(); ok {
 		_spec.AddField(team.FieldHeadcount, field.TypeInt8, value)
+	}
+	if value, ok := tu.mutation.CreatedBy(); ok {
+		_spec.SetField(team.FieldCreatedBy, field.TypeString, value)
 	}
 	if tu.mutation.PositionsCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -444,6 +474,20 @@ func (tuo *TeamUpdateOne) AddHeadcount(i int8) *TeamUpdateOne {
 	return tuo
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (tuo *TeamUpdateOne) SetCreatedBy(s string) *TeamUpdateOne {
+	tuo.mutation.SetCreatedBy(s)
+	return tuo
+}
+
+// SetNillableCreatedBy sets the "created_by" field if the given value is not nil.
+func (tuo *TeamUpdateOne) SetNillableCreatedBy(s *string) *TeamUpdateOne {
+	if s != nil {
+		tuo.SetCreatedBy(*s)
+	}
+	return tuo
+}
+
 // AddPositionIDs adds the "positions" edge to the Position entity by IDs.
 func (tuo *TeamUpdateOne) AddPositionIDs(ids ...int) *TeamUpdateOne {
 	tuo.mutation.AddPositionIDs(ids...)
@@ -597,7 +641,20 @@ func (tuo *TeamUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (tuo *TeamUpdateOne) check() error {
+	if v, ok := tuo.mutation.CreatedBy(); ok {
+		if err := team.CreatedByValidator(v); err != nil {
+			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "Team.created_by": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) {
+	if err := tuo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(team.Table, team.Columns, sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt))
 	id, ok := tuo.mutation.ID()
 	if !ok {
@@ -634,6 +691,9 @@ func (tuo *TeamUpdateOne) sqlSave(ctx context.Context) (_node *Team, err error) 
 	}
 	if value, ok := tuo.mutation.AddedHeadcount(); ok {
 		_spec.AddField(team.FieldHeadcount, field.TypeInt8, value)
+	}
+	if value, ok := tuo.mutation.CreatedBy(); ok {
+		_spec.SetField(team.FieldCreatedBy, field.TypeString, value)
 	}
 	if tuo.mutation.PositionsCleared() {
 		edge := &sqlgraph.EdgeSpec{

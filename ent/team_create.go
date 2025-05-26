@@ -40,6 +40,12 @@ func (tc *TeamCreate) SetHeadcount(i int8) *TeamCreate {
 	return tc
 }
 
+// SetCreatedBy sets the "created_by" field.
+func (tc *TeamCreate) SetCreatedBy(s string) *TeamCreate {
+	tc.mutation.SetCreatedBy(s)
+	return tc
+}
+
 // AddPositionIDs adds the "positions" edge to the Position entity by IDs.
 func (tc *TeamCreate) AddPositionIDs(ids ...int) *TeamCreate {
 	tc.mutation.AddPositionIDs(ids...)
@@ -128,6 +134,14 @@ func (tc *TeamCreate) check() error {
 	if _, ok := tc.mutation.Headcount(); !ok {
 		return &ValidationError{Name: "headcount", err: errors.New(`ent: missing required field "Team.headcount"`)}
 	}
+	if _, ok := tc.mutation.CreatedBy(); !ok {
+		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required field "Team.created_by"`)}
+	}
+	if v, ok := tc.mutation.CreatedBy(); ok {
+		if err := team.CreatedByValidator(v); err != nil {
+			return &ValidationError{Name: "created_by", err: fmt.Errorf(`ent: validator failed for field "Team.created_by": %w`, err)}
+		}
+	}
 	return nil
 }
 
@@ -165,6 +179,10 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 	if value, ok := tc.mutation.Headcount(); ok {
 		_spec.SetField(team.FieldHeadcount, field.TypeInt8, value)
 		_node.Headcount = value
+	}
+	if value, ok := tc.mutation.CreatedBy(); ok {
+		_spec.SetField(team.FieldCreatedBy, field.TypeString, value)
+		_node.CreatedBy = value
 	}
 	if nodes := tc.mutation.PositionsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
