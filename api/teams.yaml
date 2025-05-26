@@ -16,6 +16,14 @@ paths:
       operationId: makeAnnouncement
       tags:
         - お知らせ
+      parameters:
+        - name: access_token
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          description: JWTアクセストークン
       requestBody:
         required: true
         content:
@@ -33,6 +41,14 @@ paths:
       operationId: makeTeam
       tags:
         - チーム
+      parameters:
+        - name: access_token
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          description: JWTアクセストークン
       requestBody:
         required: true
         content:
@@ -96,6 +112,7 @@ components:
         - description
         - headcount
         - vacancies
+        - skills
       properties:
         teamName:
           type: string
@@ -115,6 +132,12 @@ components:
           description: 募集人数
           minimum: 0
           example: 2
+        skills:
+          type: array
+          description: 必要なスキル
+          items:
+            type: string
+          example: ["Go", "Docker", "Kubernetes"]
     ValidationError:
       type: object
       properties:
