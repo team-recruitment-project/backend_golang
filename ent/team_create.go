@@ -3,6 +3,7 @@
 package ent
 
 import (
+	"backend_golang/ent/member"
 	"backend_golang/ent/position"
 	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
@@ -52,6 +53,21 @@ func (tc *TeamCreate) AddPositions(p ...*Position) *TeamCreate {
 		ids[i] = p[i].ID
 	}
 	return tc.AddPositionIDs(ids...)
+}
+
+// AddMemberIDs adds the "members" edge to the Member entity by IDs.
+func (tc *TeamCreate) AddMemberIDs(ids ...int) *TeamCreate {
+	tc.mutation.AddMemberIDs(ids...)
+	return tc
+}
+
+// AddMembers adds the "members" edges to the Member entity.
+func (tc *TeamCreate) AddMembers(m ...*Member) *TeamCreate {
+	ids := make([]int, len(m))
+	for i := range m {
+		ids[i] = m[i].ID
+	}
+	return tc.AddMemberIDs(ids...)
 }
 
 // AddSkillIDs adds the "skills" edge to the Skill entity by IDs.
@@ -159,6 +175,22 @@ func (tc *TeamCreate) createSpec() (*Team, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(position.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.mutation.MembersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   team.MembersTable,
+			Columns: []string{team.MembersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(member.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

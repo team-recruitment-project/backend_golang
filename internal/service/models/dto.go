@@ -3,6 +3,7 @@ package models
 import "backend_golang/internal/models"
 
 type CreateTeam struct {
+	MemberID    string
 	TeamName    string
 	Description string
 	Headcount   int8

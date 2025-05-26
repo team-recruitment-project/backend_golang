@@ -6,6 +6,7 @@ import (
 	"backend_golang/ent/member"
 	"backend_golang/ent/predicate"
 	"backend_golang/ent/skill"
+	"backend_golang/ent/team"
 	"context"
 	"database/sql/driver"
 	"fmt"
@@ -25,6 +26,8 @@ type MemberQuery struct {
 	inters     []Interceptor
 	predicates []predicate.Member
 	withSkills *SkillQuery
+	withTeams  *TeamQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -76,6 +79,28 @@ func (mq *MemberQuery) QuerySkills() *SkillQuery {
 			sqlgraph.From(member.Table, member.FieldID, selector),
 			sqlgraph.To(skill.Table, skill.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, true, member.SkillsTable, member.SkillsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTeams chains the current query on the "teams" edge.
+func (mq *MemberQuery) QueryTeams() *TeamQuery {
+	query := (&TeamClient{config: mq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := mq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := mq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(member.Table, member.FieldID, selector),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, member.TeamsTable, member.TeamsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(mq.driver.Dialect(), step)
 		return fromU, nil
@@ -276,6 +301,7 @@ func (mq *MemberQuery) Clone() *MemberQuery {
 		inters:     append([]Interceptor{}, mq.inters...),
 		predicates: append([]predicate.Member{}, mq.predicates...),
 		withSkills: mq.withSkills.Clone(),
+		withTeams:  mq.withTeams.Clone(),
 		// clone intermediate query.
 		sql:  mq.sql.Clone(),
 		path: mq.path,
@@ -290,6 +316,17 @@ func (mq *MemberQuery) WithSkills(opts ...func(*SkillQuery)) *MemberQuery {
 		opt(query)
 	}
 	mq.withSkills = query
+	return mq
+}
+
+// WithTeams tells the query-builder to eager-load the nodes that are connected to
+// the "teams" edge. The optional arguments are used to configure the query builder of the edge.
+func (mq *MemberQuery) WithTeams(opts ...func(*TeamQuery)) *MemberQuery {
+	query := (&TeamClient{config: mq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	mq.withTeams = query
 	return mq
 }
 
@@ -370,11 +407,19 @@ func (mq *MemberQuery) prepareQuery(ctx context.Context) error {
 func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Member, error) {
 	var (
 		nodes       = []*Member{}
+		withFKs     = mq.withFKs
 		_spec       = mq.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			mq.withSkills != nil,
+			mq.withTeams != nil,
 		}
 	)
+	if mq.withTeams != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, member.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Member).scanValues(nil, columns)
 	}
@@ -397,6 +442,12 @@ func (mq *MemberQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Membe
 		if err := mq.loadSkills(ctx, query, nodes,
 			func(n *Member) { n.Edges.Skills = []*Skill{} },
 			func(n *Member, e *Skill) { n.Edges.Skills = append(n.Edges.Skills, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := mq.withTeams; query != nil {
+		if err := mq.loadTeams(ctx, query, nodes, nil,
+			func(n *Member, e *Team) { n.Edges.Teams = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -460,6 +511,38 @@ func (mq *MemberQuery) loadSkills(ctx context.Context, query *SkillQuery, nodes 
 		}
 		for kn := range nodes {
 			assign(kn, n)
+		}
+	}
+	return nil
+}
+func (mq *MemberQuery) loadTeams(ctx context.Context, query *TeamQuery, nodes []*Member, init func(*Member), assign func(*Member, *Team)) error {
+	ids := make([]int, 0, len(nodes))
+	nodeids := make(map[int][]*Member)
+	for i := range nodes {
+		if nodes[i].team_members == nil {
+			continue
+		}
+		fk := *nodes[i].team_members
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(team.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "team_members" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
 		}
 	}
 	return nil

@@ -28,14 +28,19 @@ func main() {
 	app := gin.Default()
 
 	// Middleware
-	app.Use(cors.Default())
+	app.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Content-Length", "Accept", "X-CSRF-Token", "Authorization"},
+		AllowCredentials: true,
+	}))
 
 	// Team
 	teamRepository := repository.NewTeamRepository(client)
 	teamService := service.NewTeamService(teamRepository)
 	teamController := controller.NewTeamController(teamService)
-	app.POST("/v1/teams", teamController.MakeTeam)
-	app.DELETE("/v1/teams/:teamID", teamController.DeleteTeam)
+	app.POST("/v1/teams", middleware.Authentication(), teamController.MakeTeam)
+	app.DELETE("/v1/teams/:teamID", middleware.Authentication(), teamController.DeleteTeam)
 
 	// Announcement
 	announcementRepository := repository.NewAnnouncementRepository(client)
@@ -50,8 +55,8 @@ func main() {
 
 	app.GET("/v1/auth/login", authController.Login)
 	app.GET("/login/oauth2/code/google", authController.GoogleCallback)
-	app.POST("/v1/auth/signup", authController.Signup, middleware.Authentication())
-	app.GET("/v1/me", authController.GetMember, middleware.Authentication())
+	app.POST("/v1/auth/signup", middleware.Authentication(), authController.Signup)
+	app.GET("/v1/me", middleware.Authentication(), authController.GetMember)
 
 	app.Run(":8080")
 }

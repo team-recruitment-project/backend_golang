@@ -6,6 +6,7 @@ import (
 	"backend_golang/ent/member"
 	"backend_golang/ent/predicate"
 	"backend_golang/ent/skill"
+	"backend_golang/ent/team"
 	"context"
 	"errors"
 	"fmt"
@@ -127,6 +128,25 @@ func (mu *MemberUpdate) AddSkills(s ...*Skill) *MemberUpdate {
 	return mu.AddSkillIDs(ids...)
 }
 
+// SetTeamsID sets the "teams" edge to the Team entity by ID.
+func (mu *MemberUpdate) SetTeamsID(id int) *MemberUpdate {
+	mu.mutation.SetTeamsID(id)
+	return mu
+}
+
+// SetNillableTeamsID sets the "teams" edge to the Team entity by ID if the given value is not nil.
+func (mu *MemberUpdate) SetNillableTeamsID(id *int) *MemberUpdate {
+	if id != nil {
+		mu = mu.SetTeamsID(*id)
+	}
+	return mu
+}
+
+// SetTeams sets the "teams" edge to the Team entity.
+func (mu *MemberUpdate) SetTeams(t *Team) *MemberUpdate {
+	return mu.SetTeamsID(t.ID)
+}
+
 // Mutation returns the MemberMutation object of the builder.
 func (mu *MemberUpdate) Mutation() *MemberMutation {
 	return mu.mutation
@@ -151,6 +171,12 @@ func (mu *MemberUpdate) RemoveSkills(s ...*Skill) *MemberUpdate {
 		ids[i] = s[i].ID
 	}
 	return mu.RemoveSkillIDs(ids...)
+}
+
+// ClearTeams clears the "teams" edge to the Team entity.
+func (mu *MemberUpdate) ClearTeams() *MemberUpdate {
+	mu.mutation.ClearTeams()
+	return mu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -245,6 +271,35 @@ func (mu *MemberUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if mu.mutation.TeamsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   member.TeamsTable,
+			Columns: []string{member.TeamsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := mu.mutation.TeamsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   member.TeamsTable,
+			Columns: []string{member.TeamsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {
@@ -371,6 +426,25 @@ func (muo *MemberUpdateOne) AddSkills(s ...*Skill) *MemberUpdateOne {
 	return muo.AddSkillIDs(ids...)
 }
 
+// SetTeamsID sets the "teams" edge to the Team entity by ID.
+func (muo *MemberUpdateOne) SetTeamsID(id int) *MemberUpdateOne {
+	muo.mutation.SetTeamsID(id)
+	return muo
+}
+
+// SetNillableTeamsID sets the "teams" edge to the Team entity by ID if the given value is not nil.
+func (muo *MemberUpdateOne) SetNillableTeamsID(id *int) *MemberUpdateOne {
+	if id != nil {
+		muo = muo.SetTeamsID(*id)
+	}
+	return muo
+}
+
+// SetTeams sets the "teams" edge to the Team entity.
+func (muo *MemberUpdateOne) SetTeams(t *Team) *MemberUpdateOne {
+	return muo.SetTeamsID(t.ID)
+}
+
 // Mutation returns the MemberMutation object of the builder.
 func (muo *MemberUpdateOne) Mutation() *MemberMutation {
 	return muo.mutation
@@ -395,6 +469,12 @@ func (muo *MemberUpdateOne) RemoveSkills(s ...*Skill) *MemberUpdateOne {
 		ids[i] = s[i].ID
 	}
 	return muo.RemoveSkillIDs(ids...)
+}
+
+// ClearTeams clears the "teams" edge to the Team entity.
+func (muo *MemberUpdateOne) ClearTeams() *MemberUpdateOne {
+	muo.mutation.ClearTeams()
+	return muo
 }
 
 // Where appends a list predicates to the MemberUpdate builder.
@@ -519,6 +599,35 @@ func (muo *MemberUpdateOne) sqlSave(ctx context.Context) (_node *Member, err err
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(skill.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if muo.mutation.TeamsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   member.TeamsTable,
+			Columns: []string{member.TeamsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := muo.mutation.TeamsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   member.TeamsTable,
+			Columns: []string{member.TeamsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
 			},
 		}
 		for _, k := range nodes {

@@ -29,12 +29,21 @@ var (
 		{Name: "nickname", Type: field.TypeString},
 		{Name: "bio", Type: field.TypeString, Size: 2147483647},
 		{Name: "preferred_role", Type: field.TypeString},
+		{Name: "team_members", Type: field.TypeInt, Nullable: true},
 	}
 	// MembersTable holds the schema information for the "members" table.
 	MembersTable = &schema.Table{
 		Name:       "members",
 		Columns:    MembersColumns,
 		PrimaryKey: []*schema.Column{MembersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "members_teams_members",
+				Columns:    []*schema.Column{MembersColumns[7]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// PositionsColumns holds the columns for the "positions" table.
 	PositionsColumns = []*schema.Column{
@@ -159,6 +168,7 @@ var (
 )
 
 func init() {
+	MembersTable.ForeignKeys[0].RefTable = TeamsTable
 	PositionsTable.ForeignKeys[0].RefTable = TeamsTable
 	SkillUsersTable.ForeignKeys[0].RefTable = SkillsTable
 	SkillUsersTable.ForeignKeys[1].RefTable = MembersTable

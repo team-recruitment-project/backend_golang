@@ -27,6 +27,12 @@ func NewTeamController(teamService service.TeamService) TeamController {
 }
 
 func (t *teamController) MakeTeam(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	req := &request.MakeTeamRequest{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -46,6 +52,7 @@ func (t *teamController) MakeTeam(c *gin.Context) {
 
 	teamID, err := t.teamService.Create(c,
 		smodels.CreateTeam{
+			MemberID:    userID.(string),
 			TeamName:    req.TeamName,
 			Description: req.Description,
 			Headcount:   req.Headcount,

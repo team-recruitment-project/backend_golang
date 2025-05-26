@@ -5,6 +5,7 @@ package ent
 import (
 	"backend_golang/ent/member"
 	"backend_golang/ent/skill"
+	"backend_golang/ent/team"
 	"context"
 	"errors"
 	"fmt"
@@ -69,6 +70,25 @@ func (mc *MemberCreate) AddSkills(s ...*Skill) *MemberCreate {
 		ids[i] = s[i].ID
 	}
 	return mc.AddSkillIDs(ids...)
+}
+
+// SetTeamsID sets the "teams" edge to the Team entity by ID.
+func (mc *MemberCreate) SetTeamsID(id int) *MemberCreate {
+	mc.mutation.SetTeamsID(id)
+	return mc
+}
+
+// SetNillableTeamsID sets the "teams" edge to the Team entity by ID if the given value is not nil.
+func (mc *MemberCreate) SetNillableTeamsID(id *int) *MemberCreate {
+	if id != nil {
+		mc = mc.SetTeamsID(*id)
+	}
+	return mc
+}
+
+// SetTeams sets the "teams" edge to the Team entity.
+func (mc *MemberCreate) SetTeams(t *Team) *MemberCreate {
+	return mc.SetTeamsID(t.ID)
 }
 
 // Mutation returns the MemberMutation object of the builder.
@@ -187,6 +207,23 @@ func (mc *MemberCreate) createSpec() (*Member, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := mc.mutation.TeamsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   member.TeamsTable,
+			Columns: []string{member.TeamsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.team_members = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -26,6 +26,8 @@ const (
 	FieldPreferredRole = "preferred_role"
 	// EdgeSkills holds the string denoting the skills edge name in mutations.
 	EdgeSkills = "skills"
+	// EdgeTeams holds the string denoting the teams edge name in mutations.
+	EdgeTeams = "teams"
 	// Table holds the table name of the member in the database.
 	Table = "members"
 	// SkillsTable is the table that holds the skills relation/edge. The primary key declared below.
@@ -33,6 +35,13 @@ const (
 	// SkillsInverseTable is the table name for the Skill entity.
 	// It exists in this package in order to avoid circular dependency with the "skill" package.
 	SkillsInverseTable = "skills"
+	// TeamsTable is the table that holds the teams relation/edge.
+	TeamsTable = "members"
+	// TeamsInverseTable is the table name for the Team entity.
+	// It exists in this package in order to avoid circular dependency with the "team" package.
+	TeamsInverseTable = "teams"
+	// TeamsColumn is the table column denoting the teams relation/edge.
+	TeamsColumn = "team_members"
 )
 
 // Columns holds all SQL columns for member fields.
@@ -46,6 +55,12 @@ var Columns = []string{
 	FieldPreferredRole,
 }
 
+// ForeignKeys holds the SQL foreign-keys that are owned by the "members"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"team_members",
+}
+
 var (
 	// SkillsPrimaryKey and SkillsColumn2 are the table columns denoting the
 	// primary key for the skills relation (M2M).
@@ -56,6 +71,11 @@ var (
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -113,10 +133,24 @@ func BySkills(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newSkillsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTeamsField orders the results by teams field.
+func ByTeamsField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTeamsStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newSkillsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(SkillsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, true, SkillsTable, SkillsPrimaryKey...),
+	)
+}
+func newTeamsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TeamsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, TeamsTable, TeamsColumn),
 	)
 }

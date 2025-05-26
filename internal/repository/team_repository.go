@@ -2,6 +2,7 @@ package repository
 
 import (
 	"backend_golang/ent"
+	"backend_golang/ent/member"
 	"backend_golang/ent/position"
 	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
@@ -76,6 +77,17 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			AddSkills(skills...).
 			Save(ctx)
 		if err != nil {
+			return err
+		}
+
+		// メンバーとチームを紐づける
+		member, err := tx.Member.Query().Where(member.MemberID(createTeam.MemberID)).First(ctx)
+		if err != nil {
+			return err
+		}
+		_, err = member.Update().SetTeams(team).Save(ctx)
+		if err != nil {
+			log.Printf("error updating member: %v", err)
 			return err
 		}
 

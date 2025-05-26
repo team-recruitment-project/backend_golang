@@ -28,5 +28,8 @@ func (Member) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("skills", Skill.Type).
 			Ref("users"),
+		edge.From("teams", Team.Type).
+			Ref("members").
+			Unique(),
 	}
 }

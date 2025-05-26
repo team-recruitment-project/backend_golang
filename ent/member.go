@@ -4,6 +4,7 @@ package ent
 
 import (
 	"backend_golang/ent/member"
+	"backend_golang/ent/team"
 	"fmt"
 	"strings"
 
@@ -31,6 +32,7 @@ type Member struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the MemberQuery when eager-loading is set.
 	Edges        MemberEdges `json:"edges"`
+	team_members *int
 	selectValues sql.SelectValues
 }
 
@@ -38,9 +40,11 @@ type Member struct {
 type MemberEdges struct {
 	// Skills holds the value of the skills edge.
 	Skills []*Skill `json:"skills,omitempty"`
+	// Teams holds the value of the teams edge.
+	Teams *Team `json:"teams,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [2]bool
 }
 
 // SkillsOrErr returns the Skills value or an error if the edge
@@ -52,6 +56,17 @@ func (e MemberEdges) SkillsOrErr() ([]*Skill, error) {
 	return nil, &NotLoadedError{edge: "skills"}
 }
 
+// TeamsOrErr returns the Teams value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e MemberEdges) TeamsOrErr() (*Team, error) {
+	if e.Teams != nil {
+		return e.Teams, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: team.Label}
+	}
+	return nil, &NotLoadedError{edge: "teams"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Member) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -61,6 +76,8 @@ func (*Member) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case member.FieldMemberID, member.FieldEmail, member.FieldPicture, member.FieldNickname, member.FieldBio, member.FieldPreferredRole:
 			values[i] = new(sql.NullString)
+		case member.ForeignKeys[0]: // team_members
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -118,6 +135,13 @@ func (m *Member) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				m.PreferredRole = value.String
 			}
+		case member.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field team_members", value)
+			} else if value.Valid {
+				m.team_members = new(int)
+				*m.team_members = int(value.Int64)
+			}
 		default:
 			m.selectValues.Set(columns[i], values[i])
 		}
@@ -134,6 +158,11 @@ func (m *Member) Value(name string) (ent.Value, error) {
 // QuerySkills queries the "skills" edge of the Member entity.
 func (m *Member) QuerySkills() *SkillQuery {
 	return NewMemberClient(m.config).QuerySkills(m)
+}
+
+// QueryTeams queries the "teams" edge of the Member entity.
+func (m *Member) QueryTeams() *TeamQuery {
+	return NewMemberClient(m.config).QueryTeams(m)
 }
 
 // Update returns a builder for updating this Member.
