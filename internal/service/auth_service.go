@@ -48,6 +48,10 @@ func (a *authService) GoogleCallback(c context.Context, code string) (string, er
 		return "", err
 	}
 
+	if foundMember, err := a.authRepository.GetMemberByID(c, member.ID); foundMember != nil && err == nil {
+		return a.generateAccessToken(foundMember.ID)
+	}
+
 	if _, err := a.authRepository.GetTransientMemberByID(c, member.ID); err != nil {
 		if ent.IsNotFound(err) {
 			_, err := a.authRepository.CreateTransientMember(c, &domain.TransientMember{
@@ -62,9 +66,13 @@ func (a *authService) GoogleCallback(c context.Context, code string) (string, er
 		}
 	}
 
+	return a.generateAccessToken(member.ID)
+}
+
+func (*authService) generateAccessToken(id string) (string, error) {
 	accessToken, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"iss": "team-recruitment",
-		"sub": member.ID,
+		"sub": id,
 		"exp": time.Now().Add(time.Minute * 30).Unix(),
 	}).SignedString(config.JWTConfig.GetSecretKey())
 	if err != nil {
@@ -76,6 +84,16 @@ func (a *authService) GoogleCallback(c context.Context, code string) (string, er
 }
 
 func (a *authService) Signup(c context.Context, userID string, signup models.SignupMember) (string, error) {
+	foundMember, err := a.authRepository.GetTransientMemberByID(c, userID)
+	if err != nil {
+		return "", err
+	}
+
+	err = a.authRepository.DeleteTransientMemberByID(c, foundMember.ID)
+	if err != nil {
+		return "", err
+	}
+
 	member, err := a.authRepository.CreateMember(c, &domain.Member{
 		ID:            userID,
 		Bio:           signup.Bio,

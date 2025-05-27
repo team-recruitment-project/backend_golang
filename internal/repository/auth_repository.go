@@ -15,6 +15,7 @@ type AuthRepository interface {
 	GetTransientMemberByID(c context.Context, id string) (*domain.TransientMember, error)
 	CreateMember(c context.Context, member *domain.Member) (*domain.Member, error)
 	GetMemberByID(c context.Context, id string) (*domain.Member, error)
+	DeleteTransientMemberByID(c context.Context, id string) error
 }
 
 type authRepository struct {
@@ -133,4 +134,15 @@ func (a *authRepository) GetMemberByID(c context.Context, id string) (*domain.Me
 		Bio:           member.Bio,
 		PreferredRole: member.PreferredRole,
 	}, nil
+}
+
+func (a *authRepository) DeleteTransientMemberByID(c context.Context, id string) error {
+	return a.tx.WithTx(c, func(tx *ent.Tx) error {
+		_, err := tx.TransientMember.Delete().Where(transientmember.TransientMemberID(id)).Exec(c)
+		if err != nil {
+			log.Printf("error deleting transient member by id: %v", err)
+			return err
+		}
+		return nil
+	})
 }
