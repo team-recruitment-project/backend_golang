@@ -89,16 +89,16 @@ func (a *authService) Signup(c context.Context, userID string, signup models.Sig
 		return "", err
 	}
 
-	err = a.authRepository.DeleteTransientMemberByID(c, foundMember.ID)
-	if err != nil {
-		return "", err
-	}
-
 	member, err := a.authRepository.CreateMember(c, &domain.Member{
 		ID:            userID,
 		Bio:           signup.Bio,
 		PreferredRole: string(signup.PreferredRole),
 	})
+	if err != nil {
+		return "", err
+	}
+
+	err = a.authRepository.DeleteTransientMemberByID(c, foundMember.ID)
 	if err != nil {
 		return "", err
 	}
