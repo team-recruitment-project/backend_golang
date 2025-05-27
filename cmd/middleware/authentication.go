@@ -16,8 +16,7 @@ func Authentication() gin.HandlerFunc {
 		accessToken, err := c.Cookie("access_token")
 		if err != nil {
 			log.Printf("error getting access token: %v", err)
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 			return
 		}
 
@@ -28,8 +27,8 @@ func Authentication() gin.HandlerFunc {
 			return []byte(config.JWTConfig.GetSecretKey()), nil
 		})
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+			return
 		}
 
 		var userID string

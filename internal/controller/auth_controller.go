@@ -14,6 +14,7 @@ import (
 
 type AuthController interface {
 	Login(c *gin.Context)
+	Logout(c *gin.Context)
 	GoogleCallback(c *gin.Context)
 	Signup(c *gin.Context)
 	GetMember(c *gin.Context)
@@ -32,6 +33,24 @@ func NewAuthController(authService service.AuthService) AuthController {
 func (a *authController) Login(c *gin.Context) {
 	response := a.authService.Login(c)
 	c.JSON(http.StatusOK, response)
+}
+
+func (a *authController) Logout(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	http.SetCookie(c.Writer, &http.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+		MaxAge:   -1,
+	})
+	c.Status(http.StatusOK)
 }
 
 func (a *authController) GoogleCallback(c *gin.Context) {
