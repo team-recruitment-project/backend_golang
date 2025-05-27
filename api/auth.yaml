@@ -39,6 +39,31 @@ paths:
                     type: string
                     example: "認証に失敗しました"
 
+  /v1/auth/logout:
+    get:
+      summary: ユーザーログアウト
+      description: ユーザーのログアウト処理を行うエンドポイント。access_tokenクッキーが必要です。
+      operationId: logout
+      tags:
+        - 認証
+      security:
+        - CookieAuth: []
+      parameters:
+        - name: access_token
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          description: JWTアクセストークン
+      responses:
+        '200':
+          description: ログアウト成功
+        '401':
+          description: 認証エラー
+        '500':
+          description: サーバーエラー
+
   /v1/auth/signup:
     post:
       summary: ユーザー登録
@@ -216,4 +241,8 @@ components:
     BearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT 
+      bearerFormat: JWT
+    CookieAuth:
+      type: JWT
+      in: cookie
+      name: access_token 
