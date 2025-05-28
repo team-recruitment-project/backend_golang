@@ -16,6 +16,7 @@ import (
 type TeamController interface {
 	MakeTeam(c *gin.Context)
 	DeleteTeam(c *gin.Context)
+	GetTeam(c *gin.Context)
 }
 
 type teamController struct {
@@ -76,4 +77,20 @@ func (t *teamController) DeleteTeam(c *gin.Context) {
 	}
 
 	t.teamService.Delete(c, teamID)
+}
+
+func (t *teamController) GetTeam(c *gin.Context) {
+	teamID, err := strconv.Atoi(c.Param("teamID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp, err := t.teamService.GetTeam(c, teamID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
 }

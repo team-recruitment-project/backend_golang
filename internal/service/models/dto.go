@@ -1,6 +1,9 @@
 package models
 
-import "backend_golang/internal/models"
+import (
+	"backend_golang/internal/domain"
+	"backend_golang/internal/models"
+)
 
 type CreateTeam struct {
 	MemberID    string
@@ -33,4 +36,14 @@ type UserResponse struct {
 	Bio           string `json:"bio"`
 	PreferredRole string `json:"preferred_role"`
 	Transient     bool   `json:"transient"`
+}
+
+type TeamResponse struct {
+	ID          int              `json:"id"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Headcount   int8             `json:"headcount"`
+	Members     []domain.Member  `json:"members"`
+	Vacancies   []models.Vacancy `json:"vacancies"`
+	Skills      []domain.Skill   `json:"skills"`
 }

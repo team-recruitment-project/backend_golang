@@ -7,15 +7,15 @@ import (
 	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
 	"backend_golang/internal/domain"
-	"backend_golang/internal/service/models"
+	"backend_golang/internal/models"
 	"context"
 	"log"
 )
 
 type TeamRepository interface {
-	CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error)
+	CreateTeam(ctx context.Context, createTeam *domain.Team) (*domain.Team, error)
 	DeleteTeam(ctx context.Context, teamID int) error
-	FindByID(ctx context.Context, teamID int) error
+	FindByID(ctx context.Context, teamID int) (*domain.Team, error)
 }
 
 type teamRepository struct {
@@ -30,7 +30,7 @@ func NewTeamRepository(client *ent.Client) TeamRepository {
 	}
 }
 
-func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.CreateTeam) (*domain.Team, error) {
+func (t *teamRepository) CreateTeam(ctx context.Context, createTeam *domain.Team) (*domain.Team, error) {
 	// TODO : createTeam 을 서비스의 dto 가 아니라 리포지토리단의 domain 모델로 변경
 	var result *domain.Team
 	err := t.tx.WithTx(ctx, func(tx *ent.Tx) error {
@@ -39,12 +39,12 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 		var skills []*ent.Skill
 		for _, s := range createTeam.Skills {
 			// TODO skill repository に移行するのが良いかも
-			foundSkill, err := tx.Skill.Query().Where(skill.Name(s)).First(ctx)
+			foundSkill, err := tx.Skill.Query().Where(skill.Name(s.Name)).First(ctx)
 			if err != nil {
 				if ent.IsNotFound(err) {
 					// TODO skill repository に移行するのが良いかも
 					foundSkill, err = tx.Skill.Create().
-						SetName(s).
+						SetName(s.Name).
 						Save(ctx)
 					if err != nil {
 						log.Printf("error creating skill: %v", err)
@@ -58,7 +58,7 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 		}
 
 		positions := []*ent.Position{}
-		for _, vacancy := range createTeam.Vacancies {
+		for _, vacancy := range createTeam.Positions {
 			savedPosition, err := tx.Position.Create().
 				SetRole(string(vacancy.Role)).
 				SetVacancy(vacancy.Vacancy).
@@ -70,10 +70,10 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 		}
 
 		team, err := tx.Team.Create().
-			SetName(createTeam.TeamName).
+			SetName(createTeam.Name).
 			SetDescription(createTeam.Description).
 			SetHeadcount(createTeam.Headcount).
-			SetCreatedBy(createTeam.MemberID).
+			SetCreatedBy(createTeam.CreatedBy).
 			AddPositions(positions...).
 			AddSkills(skills...).
 			Save(ctx)
@@ -82,7 +82,7 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 		}
 
 		// メンバーとチームを紐づける
-		member, err := tx.Member.Query().Where(member.MemberID(createTeam.MemberID)).First(ctx)
+		member, err := tx.Member.Query().Where(member.MemberID(createTeam.CreatedBy)).First(ctx)
 		if err != nil {
 			return err
 		}
@@ -92,14 +92,23 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			return err
 		}
 
-		positionIDs := make([]int, len(team.Edges.Positions))
+		// positionIDs := make([]int, len(team.Edges.Positions))
+		// for i, position := range team.Edges.Positions {
+		// 	positionIDs[i] = position.ID
+		// }
+		relatedPositions := make([]domain.Position, len(team.Edges.Positions))
 		for i, position := range team.Edges.Positions {
-			positionIDs[i] = position.ID
+			relatedPositions[i] = domain.Position{
+				Role:    models.Role(position.Role),
+				Vacancy: position.Vacancy,
+			}
 		}
 
-		skillIDs := make([]int, len(team.Edges.Skills))
+		relatedSkills := make([]domain.Skill, len(team.Edges.Skills))
 		for i, skill := range team.Edges.Skills {
-			skillIDs[i] = skill.ID
+			relatedSkills[i] = domain.Skill{
+				Name: skill.Name,
+			}
 		}
 
 		result = &domain.Team{
@@ -108,8 +117,8 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam models.Creat
 			Description: team.Description,
 			Headcount:   team.Headcount,
 			CreatedBy:   team.CreatedBy,
-			Positions:   positionIDs,
-			Skills:      skillIDs,
+			Positions:   relatedPositions,
+			Skills:      relatedSkills,
 		}
 		return nil
 	})
@@ -139,10 +148,46 @@ func (t *teamRepository) DeleteTeam(ctx context.Context, teamID int) error {
 	})
 }
 
-func (t *teamRepository) FindByID(ctx context.Context, teamID int) error {
-	_, err := t.client.Team.Query().Where(team.ID(teamID)).First(ctx)
+func (t *teamRepository) FindByID(ctx context.Context, teamID int) (*domain.Team, error) {
+	team, err := t.client.Team.Query().Where(team.ID(teamID)).WithMembers().WithPositions().WithSkills().First(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+
+	members := make([]domain.Member, len(team.Edges.Members))
+	for i, member := range team.Edges.Members {
+		members[i] = domain.Member{
+			ID:            member.MemberID,
+			Email:         member.Email,
+			Picture:       member.Picture,
+			Nickname:      member.Nickname,
+			Bio:           member.Bio,
+			PreferredRole: member.PreferredRole,
+		}
+	}
+
+	positions := make([]domain.Position, len(team.Edges.Positions))
+	for i, position := range team.Edges.Positions {
+		positions[i] = domain.Position{
+			Role:    models.Role(position.Role),
+			Vacancy: position.Vacancy,
+		}
+	}
+	skills := make([]domain.Skill, len(team.Edges.Skills))
+	for i, skill := range team.Edges.Skills {
+		skills[i] = domain.Skill{
+			Name: skill.Name,
+		}
+	}
+
+	return &domain.Team{
+		ID:          team.ID,
+		Name:        team.Name,
+		Description: team.Description,
+		Headcount:   team.Headcount,
+		CreatedBy:   team.CreatedBy,
+		Members:     members,
+		Positions:   positions,
+		Skills:      skills,
+	}, nil
 }

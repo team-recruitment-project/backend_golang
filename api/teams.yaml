@@ -88,6 +88,46 @@ paths:
                   error:
                     type: string
                     example: 内部サーバーエラーが発生しました
+    get:
+      summary: チーム情報を取得
+      description: チームIDを指定してチームの詳細情報を取得するエンドポイント
+      operationId: getTeam
+      tags:
+        - チーム
+      parameters:
+        - name: teamID
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 取得したいチームのID
+      responses:
+        '200':
+          description: チーム情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamResponse'
+        '404':
+          description: チームが見つからない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: チームが見つかりません
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: 内部サーバーエラーが発生しました
 
 components:
   schemas:
@@ -148,4 +188,79 @@ components:
         message:
           type: string
           description: エラーメッセージ
-          example: チーム名は必須です 
+          example: チーム名は必須です
+    TeamResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: チームID
+          example: 1004
+        name:
+          type: string
+          description: チーム名
+          example: エンジニアリングチーム
+        description:
+          type: string
+          description: チームの説明
+          example: バックエンド開発を担当するチームです
+        headcount:
+          type: integer
+          description: チームの総人数
+          example: 5
+        members:
+          type: array
+          description: チームメンバー一覧
+          items:
+            $ref: '#/components/schemas/Member'
+        vacancies:
+          type: array
+          description: 募集ポジション一覧
+          items:
+            $ref: '#/components/schemas/Vacancy'
+        skills:
+          type: array
+          description: 必要なスキル一覧
+          items:
+            $ref: '#/components/schemas/Skill'
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: メンバーID
+          example: 1
+        name:
+          type: string
+          description: メンバー名
+          example: 山田太郎
+        email:
+          type: string
+          description: メールアドレス
+          example: yamada@example.com
+    Vacancy:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: 募集ポジションID
+          example: 1
+        position:
+          type: string
+          description: ポジション名
+          example: バックエンドエンジニア
+        count:
+          type: integer
+          description: 募集人数
+          example: 2
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: スキルID
+          example: 1
+        name:
+          type: string
+          description: スキル名
+          example: Go 

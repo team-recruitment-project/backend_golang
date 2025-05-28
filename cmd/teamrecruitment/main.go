@@ -41,6 +41,7 @@ func main() {
 	teamController := controller.NewTeamController(teamService)
 	app.POST("/v1/teams", middleware.Authentication(), teamController.MakeTeam)
 	app.DELETE("/v1/teams/:teamID", middleware.Authentication(), teamController.DeleteTeam)
+	app.GET("/v1/teams/:teamID", teamController.GetTeam)
 
 	// Announcement
 	announcementRepository := repository.NewAnnouncementRepository(client)
