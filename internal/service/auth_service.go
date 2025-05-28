@@ -117,6 +117,9 @@ func (a *authService) GetMember(c context.Context, userID string) (*models.UserR
 			}
 			return &models.UserResponse{
 				ID:        transientMember.ID,
+				Email:     transientMember.Email,
+				Nickname:  transientMember.Nickname,
+				Picture:   transientMember.Picture,
 				Transient: true,
 			}, nil
 		}
