@@ -99,7 +99,8 @@ paths:
           in: path
           required: true
           schema:
-            type: string
+            type: integer
+            example: 1004
           description: 取得したいチームのID
       responses:
         '200':
@@ -128,6 +129,69 @@ paths:
                   error:
                     type: string
                     example: 内部サーバーエラーが発生しました
+  /v1/teams/{teamID}/join:
+    post:
+      summary: チームに参加する
+      description: 特定のチームに参加するエンドポイント
+      operationId: joinTeam
+      tags:
+        - チーム
+      parameters:
+        - name: access_token
+          in: cookie
+          required: true
+          schema:
+            type: string
+            example: "123e4567-e89b-12d3-a456-426614174000"
+          description: JWTアクセストークン
+        - name: teamID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1004
+          description: 参加したいチームのID
+      responses:
+        '200':
+          description: チーム参加に成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Joined team successfully"
+        '400':
+          description: 不正なリクエスト
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Invalid team ID"
+        '401':
+          description: 認証されていないリクエスト
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal server error"
 
 components:
   schemas:
@@ -168,10 +232,11 @@ components:
           minimum: 1
           example: 5
         vacancies:
-          type: integer
-          description: 募集人数
-          minimum: 0
-          example: 2
+          type: array
+          description: 募集ポジション一覧
+          items:
+            $ref: '#/components/schemas/Vacancy'
+          example: [{"role": "BACKEND", "vacancy": 2}]
         skills:
           type: array
           description: 必要なスキル
@@ -240,18 +305,18 @@ components:
           example: yamada@example.com
     Vacancy:
       type: object
+      required:
+        - role
+        - vacancy
       properties:
-        id:
-          type: integer
-          description: 募集ポジションID
-          example: 1
-        position:
+        role:
           type: string
-          description: ポジション名
-          example: バックエンドエンジニア
-        count:
+          description: ポジションの役割
+          example: "BACKEND"
+        vacancy:
           type: integer
           description: 募集人数
+          minimum: 0
           example: 2
     Skill:
       type: object

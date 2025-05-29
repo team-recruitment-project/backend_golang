@@ -37,11 +37,14 @@ func main() {
 
 	// Team
 	teamRepository := repository.NewTeamRepository(client)
-	teamService := service.NewTeamService(teamRepository)
+	authRepository := repository.NewAuthRepository(client)
+
+	teamService := service.NewTeamService(teamRepository, authRepository)
 	teamController := controller.NewTeamController(teamService)
 	app.POST("/v1/teams", middleware.Authentication(), teamController.MakeTeam)
 	app.DELETE("/v1/teams/:teamID", middleware.Authentication(), teamController.DeleteTeam)
 	app.GET("/v1/teams/:teamID", teamController.GetTeam)
+	app.POST("/v1/teams/:teamID/join", middleware.Authentication(), teamController.JoinTeam)
 
 	// Announcement
 	announcementRepository := repository.NewAnnouncementRepository(client)
@@ -50,7 +53,6 @@ func main() {
 	app.POST("/v1/announcements", announcementController.Announce)
 
 	// Auth
-	authRepository := repository.NewAuthRepository(client)
 	authService := service.NewAuthService(authRepository)
 	authController := controller.NewAuthController(authService)
 

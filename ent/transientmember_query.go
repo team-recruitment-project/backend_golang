@@ -10,6 +10,7 @@ import (
 	"math"
 
 	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -22,6 +23,7 @@ type TransientMemberQuery struct {
 	order      []transientmember.OrderOption
 	inters     []Interceptor
 	predicates []predicate.TransientMember
+	modifiers  []func(*sql.Selector)
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -343,6 +345,9 @@ func (tmq *TransientMemberQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
 	}
+	if len(tmq.modifiers) > 0 {
+		_spec.Modifiers = tmq.modifiers
+	}
 	for i := range hooks {
 		hooks[i](ctx, _spec)
 	}
@@ -357,6 +362,9 @@ func (tmq *TransientMemberQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 
 func (tmq *TransientMemberQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tmq.querySpec()
+	if len(tmq.modifiers) > 0 {
+		_spec.Modifiers = tmq.modifiers
+	}
 	_spec.Node.Columns = tmq.ctx.Fields
 	if len(tmq.ctx.Fields) > 0 {
 		_spec.Unique = tmq.ctx.Unique != nil && *tmq.ctx.Unique
@@ -419,6 +427,9 @@ func (tmq *TransientMemberQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	if tmq.ctx.Unique != nil && *tmq.ctx.Unique {
 		selector.Distinct()
 	}
+	for _, m := range tmq.modifiers {
+		m(selector)
+	}
 	for _, p := range tmq.predicates {
 		p(selector)
 	}
@@ -434,6 +445,32 @@ func (tmq *TransientMemberQuery) sqlQuery(ctx context.Context) *sql.Selector {
 		selector.Limit(*limit)
 	}
 	return selector
+}
+
+// ForUpdate locks the selected rows against concurrent updates, and prevent them from being
+// updated, deleted or "selected ... for update" by other sessions, until the transaction is
+// either committed or rolled-back.
+func (tmq *TransientMemberQuery) ForUpdate(opts ...sql.LockOption) *TransientMemberQuery {
+	if tmq.driver.Dialect() == dialect.Postgres {
+		tmq.Unique(false)
+	}
+	tmq.modifiers = append(tmq.modifiers, func(s *sql.Selector) {
+		s.ForUpdate(opts...)
+	})
+	return tmq
+}
+
+// ForShare behaves similarly to ForUpdate, except that it acquires a shared mode lock
+// on any rows that are read. Other sessions can read the rows, but cannot modify them
+// until your transaction commits.
+func (tmq *TransientMemberQuery) ForShare(opts ...sql.LockOption) *TransientMemberQuery {
+	if tmq.driver.Dialect() == dialect.Postgres {
+		tmq.Unique(false)
+	}
+	tmq.modifiers = append(tmq.modifiers, func(s *sql.Selector) {
+		s.ForShare(opts...)
+	})
+	return tmq
 }
 
 // TransientMemberGroupBy is the group-by builder for TransientMember entities.

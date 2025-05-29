@@ -16,6 +16,7 @@ type TeamRepository interface {
 	CreateTeam(ctx context.Context, createTeam *domain.Team) (*domain.Team, error)
 	DeleteTeam(ctx context.Context, teamID int) error
 	FindByID(ctx context.Context, teamID int) (*domain.Team, error)
+	JoinTeam(ctx context.Context, teamID int, memberID string) error
 }
 
 type teamRepository struct {
@@ -190,4 +191,55 @@ func (t *teamRepository) FindByID(ctx context.Context, teamID int) (*domain.Team
 		Positions:   positions,
 		Skills:      skills,
 	}, nil
+}
+
+func (t *teamRepository) JoinTeam(ctx context.Context, teamID int, memberID string) error {
+	return t.tx.WithTx(ctx, func(tx *ent.Tx) error {
+		// 멤버 조회
+		memberEnt, err := tx.Member.Query().Where(member.MemberID(memberID)).First(ctx)
+		if err != nil {
+			log.Printf("error finding member: %v", err)
+			return err
+		}
+
+		// 팀 조회
+		teamEnt, err := tx.Team.Query().Where(team.ID(teamID)).First(ctx)
+		if err != nil {
+			log.Printf("error finding team: %v", err)
+			return err
+		}
+
+		// 포지션 조회 (role, teamID로)
+		posEnt, err := tx.Position.Query().
+			Where(
+				position.RoleEQ(memberEnt.PreferredRole),
+				position.HasTeamWith(team.ID(teamID)),
+			).
+			ForUpdate(). // lock 획득
+			First(ctx)
+		if err != nil {
+			log.Printf("error finding position: %v", err)
+			return err
+		}
+
+		// vacancy 감소
+		_, err = posEnt.Update().
+			SetVacancy(posEnt.Vacancy - 1).
+			Save(ctx)
+		if err != nil {
+			log.Printf("error updating position: %v", err)
+			return err
+		}
+
+		// 멤버와 팀 연결 (1 : 1 관계)
+		_, err = memberEnt.Update().
+			SetTeamsID(teamEnt.ID).
+			Save(ctx)
+		if err != nil {
+			log.Printf("error updating member: %v", err)
+			return err
+		}
+
+		return nil
+	})
 }

@@ -19,6 +19,11 @@ go run -mod=mod entgo.io/ent/cmd/ent new [SchemaName]
 go generate ./ent
 ```
 
+**機能追加**
+```shell
+go run -mod=mod entgo.io/ent/cmd/ent generate --feature sql/lock ./ent/schema
+```
+
 ## アプリケーション
 **起動**
 ```shell

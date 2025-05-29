@@ -17,6 +17,7 @@ type TeamController interface {
 	MakeTeam(c *gin.Context)
 	DeleteTeam(c *gin.Context)
 	GetTeam(c *gin.Context)
+	JoinTeam(c *gin.Context)
 }
 
 type teamController struct {
@@ -93,4 +94,26 @@ func (t *teamController) GetTeam(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, resp)
+}
+
+func (t *teamController) JoinTeam(c *gin.Context) {
+	userID, exists := c.Get("userID")
+	if !exists || userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	teamID, err := strconv.Atoi(c.Param("teamID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err = t.teamService.JoinTeam(c, teamID, userID.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Joined team successfully"})
 }
