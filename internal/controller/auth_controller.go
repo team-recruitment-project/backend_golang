@@ -70,7 +70,7 @@ func (a *authController) GoogleCallback(c *gin.Context) {
 		MaxAge:   int((time.Minute * 30).Seconds()),
 	})
 
-	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:3000/")
+	c.Redirect(http.StatusTemporaryRedirect, "http://localhost:3000?login=success")
 }
 
 func (a *authController) Signup(c *gin.Context) {
