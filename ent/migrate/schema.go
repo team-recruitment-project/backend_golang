@@ -13,12 +13,23 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "title", Type: field.TypeString},
 		{Name: "content", Type: field.TypeString},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "team_announcements", Type: field.TypeInt, Nullable: true},
 	}
 	// AnnouncementsTable holds the schema information for the "announcements" table.
 	AnnouncementsTable = &schema.Table{
 		Name:       "announcements",
 		Columns:    AnnouncementsColumns,
 		PrimaryKey: []*schema.Column{AnnouncementsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "announcements_teams_announcements",
+				Columns:    []*schema.Column{AnnouncementsColumns[5]},
+				RefColumns: []*schema.Column{TeamsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// MembersColumns holds the columns for the "members" table.
 	MembersColumns = []*schema.Column{
@@ -169,6 +180,7 @@ var (
 )
 
 func init() {
+	AnnouncementsTable.ForeignKeys[0].RefTable = TeamsTable
 	MembersTable.ForeignKeys[0].RefTable = TeamsTable
 	PositionsTable.ForeignKeys[0].RefTable = TeamsTable
 	SkillUsersTable.ForeignKeys[0].RefTable = SkillsTable

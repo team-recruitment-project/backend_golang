@@ -1,0 +1,290 @@
+openapi: 3.0.0
+info:
+  title: お知らせAPI
+  description: チームのお知らせを管理するためのAPI仕様書
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: 開発環境
+
+paths:
+  /v1/announcements:
+    post:
+      summary: 新しいお知らせを作成
+      description: 新しいお知らせを作成するためのエンドポイント。チームリーダーのみが作成可能で、24時間に1回のみ作成できます。
+      operationId: makeAnnouncement
+      tags:
+        - お知らせ
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostAnnouncement'
+      responses:
+        '201':
+          description: お知らせの作成に成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  announcementID:
+                    type: integer
+                    description: 生成されたお知らせID
+                    example: 1
+        '400':
+          description: リクエストが不正
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  errors:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ValidationError'
+        '401':
+          description: 認証エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "認証が必要です"
+        '403':
+          description: 権限エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "チームリーダーのみがお知らせを作成できます"
+        '429':
+          description: レート制限エラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "24時間に1回のみお知らせを作成できます"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "内部サーバーエラーが発生しました"
+
+  /v1/announcements/{announcementID}:
+    get:
+      summary: お知らせ情報を取得
+      description: お知らせIDを指定して詳細情報を取得するエンドポイント
+      operationId: getAnnouncement
+      tags:
+        - お知らせ
+      parameters:
+        - name: announcementID
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: 取得したいお知らせのID
+      responses:
+        '200':
+          description: お知らせ情報の取得に成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnnouncementResponse'
+        '404':
+          description: お知らせが見つからない
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "お知らせが見つかりません"
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "内部サーバーエラーが発生しました"
+
+components:
+  schemas:
+    PostAnnouncement:
+      type: object
+      required:
+        - teamID
+        - title
+        - content
+      properties:
+        teamID:
+          type: integer
+          description: チームID
+          minimum: 1
+          example: 1
+        title:
+          type: string
+          description: お知らせタイトル
+          minLength: 1
+          example: "新しいメンバー募集のお知らせ"
+        content:
+          type: string
+          description: お知らせ本文
+          minLength: 1
+          example: "バックエンドエンジニアを募集しています"
+    ValidationError:
+      type: object
+      properties:
+        field:
+          type: string
+          description: バリデーションエラーが発生したフィールド
+          example: "title"
+        message:
+          type: string
+          description: エラーメッセージ
+          example: "タイトルは必須です"
+    AnnouncementResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: お知らせID
+          example: 1
+        title:
+          type: string
+          description: お知らせタイトル
+          example: "新しいメンバー募集のお知らせ"
+        content:
+          type: string
+          description: お知らせ本文
+          example: "バックエンドエンジニアを募集しています"
+        created_at:
+          type: string
+          format: date-time
+          description: 作成日時
+          example: "2024-03-20T10:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: 更新日時
+          example: "2024-03-20T10:00:00Z"
+        team:
+          $ref: '#/components/schemas/TeamResponse'
+    TeamResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: チームID
+          example: 1
+        name:
+          type: string
+          description: チーム名
+          example: "エンジニアリングチーム"
+        description:
+          type: string
+          description: チームの説明
+          example: "バックエンド開発を担当するチームです"
+        headcount:
+          type: integer
+          description: チームの総人数
+          example: 5
+        members:
+          type: array
+          description: チームメンバー一覧
+          items:
+            $ref: '#/components/schemas/Member'
+        vacancies:
+          type: array
+          description: 募集ポジション一覧
+          items:
+            $ref: '#/components/schemas/Vacancy'
+        skills:
+          type: array
+          description: 必要なスキル一覧
+          items:
+            $ref: '#/components/schemas/Skill'
+    Member:
+      type: object
+      properties:
+        id:
+          type: string
+          description: メンバーID
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        email:
+          type: string
+          description: メールアドレス
+          example: "user@example.com"
+        nickname:
+          type: string
+          description: ニックネーム
+          example: "山田太郎"
+        picture:
+          type: string
+          description: プロフィール画像URL
+          example: "https://example.com/profile.jpg"
+        bio:
+          type: string
+          description: 自己紹介
+          example: "バックエンドエンジニアとして3年の経験があります"
+        preferred_role:
+          type: string
+          description: 希望する役割
+          enum: [FRONTEND, BACKEND, INFRA, DESIGNER, MANAGER, FULLSTACK, MOBILE]
+          example: "BACKEND"
+    Vacancy:
+      type: object
+      required:
+        - role
+        - vacancy
+      properties:
+        role:
+          type: string
+          description: ポジションの役割
+          enum: [FRONTEND, BACKEND, INFRA, DESIGNER, MANAGER, FULLSTACK, MOBILE]
+          example: "BACKEND"
+        vacancy:
+          type: integer
+          description: 募集人数
+          minimum: 0
+          example: 2
+    Skill:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: スキルID
+          example: 1
+        name:
+          type: string
+          description: スキル名
+          example: "Go"
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 

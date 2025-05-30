@@ -5,9 +5,11 @@ package ent
 import (
 	"backend_golang/ent/announcement"
 	"backend_golang/ent/predicate"
+	"backend_golang/ent/team"
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -55,13 +57,45 @@ func (au *AnnouncementUpdate) SetNillableContent(s *string) *AnnouncementUpdate 
 	return au
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (au *AnnouncementUpdate) SetUpdatedAt(t time.Time) *AnnouncementUpdate {
+	au.mutation.SetUpdatedAt(t)
+	return au
+}
+
+// SetTeamID sets the "team" edge to the Team entity by ID.
+func (au *AnnouncementUpdate) SetTeamID(id int) *AnnouncementUpdate {
+	au.mutation.SetTeamID(id)
+	return au
+}
+
+// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
+func (au *AnnouncementUpdate) SetNillableTeamID(id *int) *AnnouncementUpdate {
+	if id != nil {
+		au = au.SetTeamID(*id)
+	}
+	return au
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (au *AnnouncementUpdate) SetTeam(t *Team) *AnnouncementUpdate {
+	return au.SetTeamID(t.ID)
+}
+
 // Mutation returns the AnnouncementMutation object of the builder.
 func (au *AnnouncementUpdate) Mutation() *AnnouncementMutation {
 	return au.mutation
 }
 
+// ClearTeam clears the "team" edge to the Team entity.
+func (au *AnnouncementUpdate) ClearTeam() *AnnouncementUpdate {
+	au.mutation.ClearTeam()
+	return au
+}
+
 // Save executes the query and returns the number of nodes affected by the update operation.
 func (au *AnnouncementUpdate) Save(ctx context.Context) (int, error) {
+	au.defaults()
 	return withHooks(ctx, au.sqlSave, au.mutation, au.hooks)
 }
 
@@ -84,6 +118,14 @@ func (au *AnnouncementUpdate) Exec(ctx context.Context) error {
 func (au *AnnouncementUpdate) ExecX(ctx context.Context) {
 	if err := au.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (au *AnnouncementUpdate) defaults() {
+	if _, ok := au.mutation.UpdatedAt(); !ok {
+		v := announcement.UpdateDefaultUpdatedAt()
+		au.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -119,6 +161,38 @@ func (au *AnnouncementUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := au.mutation.Content(); ok {
 		_spec.SetField(announcement.FieldContent, field.TypeString, value)
+	}
+	if value, ok := au.mutation.UpdatedAt(); ok {
+		_spec.SetField(announcement.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if au.mutation.TeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   announcement.TeamTable,
+			Columns: []string{announcement.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := au.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   announcement.TeamTable,
+			Columns: []string{announcement.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, au.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -168,9 +242,40 @@ func (auo *AnnouncementUpdateOne) SetNillableContent(s *string) *AnnouncementUpd
 	return auo
 }
 
+// SetUpdatedAt sets the "updated_at" field.
+func (auo *AnnouncementUpdateOne) SetUpdatedAt(t time.Time) *AnnouncementUpdateOne {
+	auo.mutation.SetUpdatedAt(t)
+	return auo
+}
+
+// SetTeamID sets the "team" edge to the Team entity by ID.
+func (auo *AnnouncementUpdateOne) SetTeamID(id int) *AnnouncementUpdateOne {
+	auo.mutation.SetTeamID(id)
+	return auo
+}
+
+// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
+func (auo *AnnouncementUpdateOne) SetNillableTeamID(id *int) *AnnouncementUpdateOne {
+	if id != nil {
+		auo = auo.SetTeamID(*id)
+	}
+	return auo
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (auo *AnnouncementUpdateOne) SetTeam(t *Team) *AnnouncementUpdateOne {
+	return auo.SetTeamID(t.ID)
+}
+
 // Mutation returns the AnnouncementMutation object of the builder.
 func (auo *AnnouncementUpdateOne) Mutation() *AnnouncementMutation {
 	return auo.mutation
+}
+
+// ClearTeam clears the "team" edge to the Team entity.
+func (auo *AnnouncementUpdateOne) ClearTeam() *AnnouncementUpdateOne {
+	auo.mutation.ClearTeam()
+	return auo
 }
 
 // Where appends a list predicates to the AnnouncementUpdate builder.
@@ -188,6 +293,7 @@ func (auo *AnnouncementUpdateOne) Select(field string, fields ...string) *Announ
 
 // Save executes the query and returns the updated Announcement entity.
 func (auo *AnnouncementUpdateOne) Save(ctx context.Context) (*Announcement, error) {
+	auo.defaults()
 	return withHooks(ctx, auo.sqlSave, auo.mutation, auo.hooks)
 }
 
@@ -210,6 +316,14 @@ func (auo *AnnouncementUpdateOne) Exec(ctx context.Context) error {
 func (auo *AnnouncementUpdateOne) ExecX(ctx context.Context) {
 	if err := auo.Exec(ctx); err != nil {
 		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (auo *AnnouncementUpdateOne) defaults() {
+	if _, ok := auo.mutation.UpdatedAt(); !ok {
+		v := announcement.UpdateDefaultUpdatedAt()
+		auo.mutation.SetUpdatedAt(v)
 	}
 }
 
@@ -262,6 +376,38 @@ func (auo *AnnouncementUpdateOne) sqlSave(ctx context.Context) (_node *Announcem
 	}
 	if value, ok := auo.mutation.Content(); ok {
 		_spec.SetField(announcement.FieldContent, field.TypeString, value)
+	}
+	if value, ok := auo.mutation.UpdatedAt(); ok {
+		_spec.SetField(announcement.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if auo.mutation.TeamCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   announcement.TeamTable,
+			Columns: []string{announcement.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := auo.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   announcement.TeamTable,
+			Columns: []string{announcement.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Announcement{config: auo.config}
 	_spec.Assign = _node.assignValues

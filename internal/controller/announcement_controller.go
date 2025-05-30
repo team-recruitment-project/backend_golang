@@ -6,6 +6,7 @@ import (
 	"backend_golang/internal/service"
 	servicemodels "backend_golang/internal/service/models"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -13,6 +14,7 @@ import (
 
 type AnnouncementController interface {
 	Announce(c *gin.Context)
+	GetAnnouncement(c *gin.Context)
 }
 
 type announcementController struct {
@@ -26,6 +28,12 @@ func NewAnnouncementController(announcementService service.AnnouncementService) 
 }
 
 func (a *announcementController) Announce(c *gin.Context) {
+	memberID := c.Value("userID").(string)
+	if memberID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	req := &request.PostAnnouncement{}
 	if err := c.ShouldBindJSON(req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -44,8 +52,10 @@ func (a *announcementController) Announce(c *gin.Context) {
 	}
 
 	announcementID, err := a.announcementService.Announce(c, servicemodels.RegisterAnnouncement{
-		Title:   req.Title,
-		Content: req.Content,
+		TeamID:   req.TeamID,
+		MemberID: memberID,
+		Title:    req.Title,
+		Content:  req.Content,
 	})
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -53,4 +63,18 @@ func (a *announcementController) Announce(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{"announcementID": announcementID})
+}
+
+func (a *announcementController) GetAnnouncement(c *gin.Context) {
+	announcementID, err := strconv.Atoi(c.Param("announcementID"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	announcement, err := a.announcementService.GetAnnouncement(c, announcementID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, announcement)
 }

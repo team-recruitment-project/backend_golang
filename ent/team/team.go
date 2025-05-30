@@ -24,6 +24,8 @@ const (
 	EdgePositions = "positions"
 	// EdgeMembers holds the string denoting the members edge name in mutations.
 	EdgeMembers = "members"
+	// EdgeAnnouncements holds the string denoting the announcements edge name in mutations.
+	EdgeAnnouncements = "announcements"
 	// EdgeSkills holds the string denoting the skills edge name in mutations.
 	EdgeSkills = "skills"
 	// Table holds the table name of the team in the database.
@@ -42,6 +44,13 @@ const (
 	MembersInverseTable = "members"
 	// MembersColumn is the table column denoting the members relation/edge.
 	MembersColumn = "team_members"
+	// AnnouncementsTable is the table that holds the announcements relation/edge.
+	AnnouncementsTable = "announcements"
+	// AnnouncementsInverseTable is the table name for the Announcement entity.
+	// It exists in this package in order to avoid circular dependency with the "announcement" package.
+	AnnouncementsInverseTable = "announcements"
+	// AnnouncementsColumn is the table column denoting the announcements relation/edge.
+	AnnouncementsColumn = "team_announcements"
 	// SkillsTable is the table that holds the skills relation/edge. The primary key declared below.
 	SkillsTable = "skill_teams"
 	// SkillsInverseTable is the table name for the Skill entity.
@@ -135,6 +144,20 @@ func ByMembers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByAnnouncementsCount orders the results by announcements count.
+func ByAnnouncementsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAnnouncementsStep(), opts...)
+	}
+}
+
+// ByAnnouncements orders the results by announcements terms.
+func ByAnnouncements(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAnnouncementsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // BySkillsCount orders the results by skills count.
 func BySkillsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -160,6 +183,13 @@ func newMembersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(MembersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, MembersTable, MembersColumn),
+	)
+}
+func newAnnouncementsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AnnouncementsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AnnouncementsTable, AnnouncementsColumn),
 	)
 }
 func newSkillsStep() *sqlgraph.Step {

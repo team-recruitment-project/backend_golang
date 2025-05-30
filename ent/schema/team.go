@@ -26,6 +26,7 @@ func (Team) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("positions", Position.Type),
 		edge.To("members", Member.Type),
+		edge.To("announcements", Announcement.Type),
 		edge.From("skills", Skill.Type).
 			Ref("teams"),
 	}

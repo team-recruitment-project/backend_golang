@@ -4,9 +4,11 @@ package ent
 
 import (
 	"backend_golang/ent/announcement"
+	"backend_golang/ent/team"
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
@@ -31,6 +33,53 @@ func (ac *AnnouncementCreate) SetContent(s string) *AnnouncementCreate {
 	return ac
 }
 
+// SetCreatedAt sets the "created_at" field.
+func (ac *AnnouncementCreate) SetCreatedAt(t time.Time) *AnnouncementCreate {
+	ac.mutation.SetCreatedAt(t)
+	return ac
+}
+
+// SetNillableCreatedAt sets the "created_at" field if the given value is not nil.
+func (ac *AnnouncementCreate) SetNillableCreatedAt(t *time.Time) *AnnouncementCreate {
+	if t != nil {
+		ac.SetCreatedAt(*t)
+	}
+	return ac
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (ac *AnnouncementCreate) SetUpdatedAt(t time.Time) *AnnouncementCreate {
+	ac.mutation.SetUpdatedAt(t)
+	return ac
+}
+
+// SetNillableUpdatedAt sets the "updated_at" field if the given value is not nil.
+func (ac *AnnouncementCreate) SetNillableUpdatedAt(t *time.Time) *AnnouncementCreate {
+	if t != nil {
+		ac.SetUpdatedAt(*t)
+	}
+	return ac
+}
+
+// SetTeamID sets the "team" edge to the Team entity by ID.
+func (ac *AnnouncementCreate) SetTeamID(id int) *AnnouncementCreate {
+	ac.mutation.SetTeamID(id)
+	return ac
+}
+
+// SetNillableTeamID sets the "team" edge to the Team entity by ID if the given value is not nil.
+func (ac *AnnouncementCreate) SetNillableTeamID(id *int) *AnnouncementCreate {
+	if id != nil {
+		ac = ac.SetTeamID(*id)
+	}
+	return ac
+}
+
+// SetTeam sets the "team" edge to the Team entity.
+func (ac *AnnouncementCreate) SetTeam(t *Team) *AnnouncementCreate {
+	return ac.SetTeamID(t.ID)
+}
+
 // Mutation returns the AnnouncementMutation object of the builder.
 func (ac *AnnouncementCreate) Mutation() *AnnouncementMutation {
 	return ac.mutation
@@ -38,6 +87,7 @@ func (ac *AnnouncementCreate) Mutation() *AnnouncementMutation {
 
 // Save creates the Announcement in the database.
 func (ac *AnnouncementCreate) Save(ctx context.Context) (*Announcement, error) {
+	ac.defaults()
 	return withHooks(ctx, ac.sqlSave, ac.mutation, ac.hooks)
 }
 
@@ -63,6 +113,18 @@ func (ac *AnnouncementCreate) ExecX(ctx context.Context) {
 	}
 }
 
+// defaults sets the default values of the builder before save.
+func (ac *AnnouncementCreate) defaults() {
+	if _, ok := ac.mutation.CreatedAt(); !ok {
+		v := announcement.DefaultCreatedAt()
+		ac.mutation.SetCreatedAt(v)
+	}
+	if _, ok := ac.mutation.UpdatedAt(); !ok {
+		v := announcement.DefaultUpdatedAt()
+		ac.mutation.SetUpdatedAt(v)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (ac *AnnouncementCreate) check() error {
 	if _, ok := ac.mutation.Title(); !ok {
@@ -80,6 +142,12 @@ func (ac *AnnouncementCreate) check() error {
 		if err := announcement.ContentValidator(v); err != nil {
 			return &ValidationError{Name: "content", err: fmt.Errorf(`ent: validator failed for field "Announcement.content": %w`, err)}
 		}
+	}
+	if _, ok := ac.mutation.CreatedAt(); !ok {
+		return &ValidationError{Name: "created_at", err: errors.New(`ent: missing required field "Announcement.created_at"`)}
+	}
+	if _, ok := ac.mutation.UpdatedAt(); !ok {
+		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Announcement.updated_at"`)}
 	}
 	return nil
 }
@@ -115,6 +183,31 @@ func (ac *AnnouncementCreate) createSpec() (*Announcement, *sqlgraph.CreateSpec)
 		_spec.SetField(announcement.FieldContent, field.TypeString, value)
 		_node.Content = value
 	}
+	if value, ok := ac.mutation.CreatedAt(); ok {
+		_spec.SetField(announcement.FieldCreatedAt, field.TypeTime, value)
+		_node.CreatedAt = value
+	}
+	if value, ok := ac.mutation.UpdatedAt(); ok {
+		_spec.SetField(announcement.FieldUpdatedAt, field.TypeTime, value)
+		_node.UpdatedAt = value
+	}
+	if nodes := ac.mutation.TeamIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   announcement.TeamTable,
+			Columns: []string{announcement.TeamColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(team.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.team_announcements = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
 	return _node, _spec
 }
 
@@ -136,6 +229,7 @@ func (acb *AnnouncementCreateBulk) Save(ctx context.Context) ([]*Announcement, e
 	for i := range acb.builders {
 		func(i int, root context.Context) {
 			builder := acb.builders[i]
+			builder.defaults()
 			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
 				mutation, ok := m.(*AnnouncementMutation)
 				if !ok {

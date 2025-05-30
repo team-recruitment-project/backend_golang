@@ -7,6 +7,7 @@ import (
 	"backend_golang/ent/schema"
 	"backend_golang/ent/skill"
 	"backend_golang/ent/team"
+	"time"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -23,6 +24,16 @@ func init() {
 	announcementDescContent := announcementFields[1].Descriptor()
 	// announcement.ContentValidator is a validator for the "content" field. It is called by the builders before save.
 	announcement.ContentValidator = announcementDescContent.Validators[0].(func(string) error)
+	// announcementDescCreatedAt is the schema descriptor for created_at field.
+	announcementDescCreatedAt := announcementFields[2].Descriptor()
+	// announcement.DefaultCreatedAt holds the default value on creation for the created_at field.
+	announcement.DefaultCreatedAt = announcementDescCreatedAt.Default.(func() time.Time)
+	// announcementDescUpdatedAt is the schema descriptor for updated_at field.
+	announcementDescUpdatedAt := announcementFields[3].Descriptor()
+	// announcement.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	announcement.DefaultUpdatedAt = announcementDescUpdatedAt.Default.(func() time.Time)
+	// announcement.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	announcement.UpdateDefaultUpdatedAt = announcementDescUpdatedAt.UpdateDefault.(func() time.Time)
 	skillFields := schema.Skill{}.Fields()
 	_ = skillFields
 	// skillDescName is the schema descriptor for name field.

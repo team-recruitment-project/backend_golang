@@ -16,6 +16,7 @@ type MakeTeamRequest struct {
 }
 
 type PostAnnouncement struct {
+	TeamID  int    `json:"teamID" validate:"required,min=1,notblank"`
 	Title   string `json:"title" validate:"required,min=1,notblank"`
 	Content string `json:"content" validate:"required,min=1,notblank"`
 }

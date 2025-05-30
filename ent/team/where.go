@@ -355,6 +355,29 @@ func HasMembersWith(preds ...predicate.Member) predicate.Team {
 	})
 }
 
+// HasAnnouncements applies the HasEdge predicate on the "announcements" edge.
+func HasAnnouncements() predicate.Team {
+	return predicate.Team(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AnnouncementsTable, AnnouncementsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAnnouncementsWith applies the HasEdge predicate on the "announcements" edge with a given conditions (other predicates).
+func HasAnnouncementsWith(preds ...predicate.Announcement) predicate.Team {
+	return predicate.Team(func(s *sql.Selector) {
+		step := newAnnouncementsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // HasSkills applies the HasEdge predicate on the "skills" edge.
 func HasSkills() predicate.Team {
 	return predicate.Team(func(s *sql.Selector) {

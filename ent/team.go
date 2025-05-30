@@ -36,11 +36,13 @@ type TeamEdges struct {
 	Positions []*Position `json:"positions,omitempty"`
 	// Members holds the value of the members edge.
 	Members []*Member `json:"members,omitempty"`
+	// Announcements holds the value of the announcements edge.
+	Announcements []*Announcement `json:"announcements,omitempty"`
 	// Skills holds the value of the skills edge.
 	Skills []*Skill `json:"skills,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // PositionsOrErr returns the Positions value or an error if the edge
@@ -61,10 +63,19 @@ func (e TeamEdges) MembersOrErr() ([]*Member, error) {
 	return nil, &NotLoadedError{edge: "members"}
 }
 
+// AnnouncementsOrErr returns the Announcements value or an error if the edge
+// was not loaded in eager-loading.
+func (e TeamEdges) AnnouncementsOrErr() ([]*Announcement, error) {
+	if e.loadedTypes[2] {
+		return e.Announcements, nil
+	}
+	return nil, &NotLoadedError{edge: "announcements"}
+}
+
 // SkillsOrErr returns the Skills value or an error if the edge
 // was not loaded in eager-loading.
 func (e TeamEdges) SkillsOrErr() ([]*Skill, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Skills, nil
 	}
 	return nil, &NotLoadedError{edge: "skills"}
@@ -145,6 +156,11 @@ func (t *Team) QueryPositions() *PositionQuery {
 // QueryMembers queries the "members" edge of the Team entity.
 func (t *Team) QueryMembers() *MemberQuery {
 	return NewTeamClient(t.config).QueryMembers(t)
+}
+
+// QueryAnnouncements queries the "announcements" edge of the Team entity.
+func (t *Team) QueryAnnouncements() *AnnouncementQuery {
+	return NewTeamClient(t.config).QueryAnnouncements(t)
 }
 
 // QuerySkills queries the "skills" edge of the Team entity.

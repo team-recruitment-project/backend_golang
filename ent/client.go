@@ -354,6 +354,22 @@ func (c *AnnouncementClient) GetX(ctx context.Context, id int) *Announcement {
 	return obj
 }
 
+// QueryTeam queries the team edge of a Announcement.
+func (c *AnnouncementClient) QueryTeam(a *Announcement) *TeamQuery {
+	query := (&TeamClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := a.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(announcement.Table, announcement.FieldID, id),
+			sqlgraph.To(team.Table, team.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, announcement.TeamTable, announcement.TeamColumn),
+		)
+		fromV = sqlgraph.Neighbors(a.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *AnnouncementClient) Hooks() []Hook {
 	return c.hooks.Announcement
@@ -991,6 +1007,22 @@ func (c *TeamClient) QueryMembers(t *Team) *MemberQuery {
 			sqlgraph.From(team.Table, team.FieldID, id),
 			sqlgraph.To(member.Table, member.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, team.MembersTable, team.MembersColumn),
+		)
+		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAnnouncements queries the announcements edge of a Team.
+func (c *TeamClient) QueryAnnouncements(t *Team) *AnnouncementQuery {
+	query := (&AnnouncementClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := t.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(team.Table, team.FieldID, id),
+			sqlgraph.To(announcement.Table, announcement.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, team.AnnouncementsTable, team.AnnouncementsColumn),
 		)
 		fromV = sqlgraph.Neighbors(t.driver.Dialect(), step)
 		return fromV, nil

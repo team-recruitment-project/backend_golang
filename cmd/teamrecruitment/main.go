@@ -48,9 +48,10 @@ func main() {
 
 	// Announcement
 	announcementRepository := repository.NewAnnouncementRepository(client)
-	announcementService := service.NewAnnouncementService(announcementRepository)
+	announcementService := service.NewAnnouncementService(announcementRepository, teamRepository)
 	announcementController := controller.NewAnnouncementController(announcementService)
-	app.POST("/v1/announcements", announcementController.Announce)
+	app.POST("/v1/announcements", middleware.Authentication(), announcementController.Announce)
+	app.GET("/v1/announcements/:announcementID", announcementController.GetAnnouncement)
 
 	// Auth
 	authService := service.NewAuthService(authRepository)

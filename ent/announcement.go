@@ -4,8 +4,10 @@ package ent
 
 import (
 	"backend_golang/ent/announcement"
+	"backend_golang/ent/team"
 	"fmt"
 	"strings"
+	"time"
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
@@ -19,8 +21,36 @@ type Announcement struct {
 	// Title holds the value of the "title" field.
 	Title string `json:"title,omitempty"`
 	// Content holds the value of the "content" field.
-	Content      string `json:"content,omitempty"`
-	selectValues sql.SelectValues
+	Content string `json:"content,omitempty"`
+	// CreatedAt holds the value of the "created_at" field.
+	CreatedAt time.Time `json:"created_at,omitempty"`
+	// UpdatedAt holds the value of the "updated_at" field.
+	UpdatedAt time.Time `json:"updated_at,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the AnnouncementQuery when eager-loading is set.
+	Edges              AnnouncementEdges `json:"edges"`
+	team_announcements *int
+	selectValues       sql.SelectValues
+}
+
+// AnnouncementEdges holds the relations/edges for other nodes in the graph.
+type AnnouncementEdges struct {
+	// Team holds the value of the team edge.
+	Team *Team `json:"team,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// TeamOrErr returns the Team value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e AnnouncementEdges) TeamOrErr() (*Team, error) {
+	if e.Team != nil {
+		return e.Team, nil
+	} else if e.loadedTypes[0] {
+		return nil, &NotFoundError{label: team.Label}
+	}
+	return nil, &NotLoadedError{edge: "team"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -32,6 +62,10 @@ func (*Announcement) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullInt64)
 		case announcement.FieldTitle, announcement.FieldContent:
 			values[i] = new(sql.NullString)
+		case announcement.FieldCreatedAt, announcement.FieldUpdatedAt:
+			values[i] = new(sql.NullTime)
+		case announcement.ForeignKeys[0]: // team_announcements
+			values[i] = new(sql.NullInt64)
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -65,6 +99,25 @@ func (a *Announcement) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				a.Content = value.String
 			}
+		case announcement.FieldCreatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field created_at", values[i])
+			} else if value.Valid {
+				a.CreatedAt = value.Time
+			}
+		case announcement.FieldUpdatedAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
+			} else if value.Valid {
+				a.UpdatedAt = value.Time
+			}
+		case announcement.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field team_announcements", value)
+			} else if value.Valid {
+				a.team_announcements = new(int)
+				*a.team_announcements = int(value.Int64)
+			}
 		default:
 			a.selectValues.Set(columns[i], values[i])
 		}
@@ -76,6 +129,11 @@ func (a *Announcement) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (a *Announcement) Value(name string) (ent.Value, error) {
 	return a.selectValues.Get(name)
+}
+
+// QueryTeam queries the "team" edge of the Announcement entity.
+func (a *Announcement) QueryTeam() *TeamQuery {
+	return NewAnnouncementClient(a.config).QueryTeam(a)
 }
 
 // Update returns a builder for updating this Announcement.
@@ -106,6 +164,12 @@ func (a *Announcement) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("content=")
 	builder.WriteString(a.Content)
+	builder.WriteString(", ")
+	builder.WriteString("created_at=")
+	builder.WriteString(a.CreatedAt.Format(time.ANSIC))
+	builder.WriteString(", ")
+	builder.WriteString("updated_at=")
+	builder.WriteString(a.UpdatedAt.Format(time.ANSIC))
 	builder.WriteByte(')')
 	return builder.String()
 }

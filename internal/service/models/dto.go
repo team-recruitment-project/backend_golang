@@ -3,6 +3,7 @@ package models
 import (
 	"backend_golang/internal/domain"
 	"backend_golang/internal/models"
+	"time"
 )
 
 type CreateTeam struct {
@@ -15,8 +16,10 @@ type CreateTeam struct {
 }
 
 type RegisterAnnouncement struct {
-	Title   string
-	Content string
+	TeamID   int
+	MemberID string
+	Title    string
+	Content  string
 }
 
 type SignupMember struct {
@@ -46,4 +49,13 @@ type TeamResponse struct {
 	Members     []domain.Member  `json:"members"`
 	Vacancies   []models.Vacancy `json:"vacancies"`
 	Skills      []domain.Skill   `json:"skills"`
+}
+
+type AnnouncementResponse struct {
+	ID        int           `json:"id"`
+	Title     string        `json:"title"`
+	Content   string        `json:"content"`
+	CreatedAt time.Time     `json:"created_at"`
+	UpdatedAt time.Time     `json:"updated_at"`
+	Team      *TeamResponse `json:"team"`
 }
