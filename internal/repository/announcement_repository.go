@@ -7,6 +7,7 @@ import (
 	imodels "backend_golang/internal/models"
 	"backend_golang/internal/service/models"
 	"context"
+	"log"
 )
 
 type AnnouncementRepository interface {
@@ -36,6 +37,7 @@ func (a *announcementRepository) CreateAnnouncement(ctx context.Context, announc
 			SetTeamID(announcement.TeamID).
 			Save(ctx)
 		if err != nil {
+			log.Printf("error creating announcement: %v", err)
 			return err
 		}
 		result = &domain.Announcement{
@@ -48,6 +50,7 @@ func (a *announcementRepository) CreateAnnouncement(ctx context.Context, announc
 		return nil
 	})
 	if err != nil {
+		log.Printf("error getting announcement: %v", err)
 		return nil, err
 	}
 	return result, nil
@@ -83,6 +86,18 @@ func (a *announcementRepository) GetAnnouncement(ctx context.Context, announceme
 		})
 	}
 
+	var members []domain.Member
+	for _, member := range announcement.Edges.Team.Edges.Members {
+		members = append(members, domain.Member{
+			ID:            member.MemberID,
+			Email:         member.Email,
+			Nickname:      member.Nickname,
+			Picture:       member.Picture,
+			Bio:           member.Bio,
+			PreferredRole: member.PreferredRole,
+		})
+	}
+
 	return &domain.Announcement{
 		ID:        announcement.ID,
 		Title:     announcement.Title,
@@ -95,6 +110,7 @@ func (a *announcementRepository) GetAnnouncement(ctx context.Context, announceme
 			Description: announcement.Edges.Team.Description,
 			Headcount:   announcement.Edges.Team.Headcount,
 			CreatedBy:   announcement.Edges.Team.CreatedBy,
+			Members:     members,
 			Skills:      skills,
 			Positions:   positions,
 		},

@@ -70,11 +70,18 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam *domain.Team
 			positions = append(positions, savedPosition)
 		}
 
+		foundMember, err := t.client.Member.Query().Where(member.MemberID(createTeam.CreatedBy)).First(ctx)
+		if err != nil {
+			log.Printf("error finding member: %v", err)
+			return err
+		}
+
 		team, err := tx.Team.Create().
 			SetName(createTeam.Name).
 			SetDescription(createTeam.Description).
 			SetHeadcount(createTeam.Headcount).
 			SetCreatedBy(createTeam.CreatedBy).
+			AddMembers(foundMember).
 			AddPositions(positions...).
 			AddSkills(skills...).
 			Save(ctx)
@@ -93,10 +100,6 @@ func (t *teamRepository) CreateTeam(ctx context.Context, createTeam *domain.Team
 			return err
 		}
 
-		// positionIDs := make([]int, len(team.Edges.Positions))
-		// for i, position := range team.Edges.Positions {
-		// 	positionIDs[i] = position.ID
-		// }
 		relatedPositions := make([]domain.Position, len(team.Edges.Positions))
 		for i, position := range team.Edges.Positions {
 			relatedPositions[i] = domain.Position{

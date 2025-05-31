@@ -46,6 +46,7 @@ type TeamResponse struct {
 	Name        string           `json:"name"`
 	Description string           `json:"description"`
 	Headcount   int8             `json:"headcount"`
+	CreatedBy   string           `json:"created_by"`
 	Members     []domain.Member  `json:"members"`
 	Vacancies   []models.Vacancy `json:"vacancies"`
 	Skills      []domain.Skill   `json:"skills"`

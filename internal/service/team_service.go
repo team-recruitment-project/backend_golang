@@ -98,6 +98,7 @@ func (t *teamService) GetTeam(ctx context.Context, teamID int) (*models.TeamResp
 		Name:        team.Name,
 		Description: team.Description,
 		Headcount:   team.Headcount,
+		CreatedBy:   team.CreatedBy,
 		Members:     members,
 		Vacancies:   vacancies,
 		Skills:      team.Skills,
