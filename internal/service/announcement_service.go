@@ -13,6 +13,7 @@ import (
 type AnnouncementService interface {
 	Announce(ctx context.Context, model imodels.RegisterAnnouncement) (int, error)
 	GetAnnouncement(ctx context.Context, announcementID int) (*imodels.AnnouncementResponse, error)
+	GetAnnouncements(ctx context.Context, page int, size int, skills []string, positions []string, keyword string) ([]imodels.AnnouncementResponse, error)
 }
 
 type announcementService struct {
@@ -87,4 +88,41 @@ func (a *announcementService) GetAnnouncement(ctx context.Context, announcementI
 			Skills:      announcement.Team.Skills,
 		},
 	}, nil
+}
+
+func (a *announcementService) GetAnnouncements(ctx context.Context, page int, size int, skills []string, positions []string, keyword string) ([]imodels.AnnouncementResponse, error) {
+	announcements, err := a.announcementRepository.GetAnnouncements(ctx, page, size, skills, positions, keyword)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO 변환
+	var result []imodels.AnnouncementResponse
+	for _, announcement := range announcements {
+		var vacancies []models.Vacancy
+		for _, position := range announcement.Team.Positions {
+			vacancies = append(vacancies, models.Vacancy{
+				Role:    position.Role,
+				Vacancy: position.Vacancy,
+			})
+		}
+		result = append(result, imodels.AnnouncementResponse{
+			ID:        announcement.ID,
+			Title:     announcement.Title,
+			Content:   announcement.Content,
+			CreatedAt: announcement.CreatedAt,
+			UpdatedAt: announcement.UpdatedAt,
+			Team: &imodels.TeamResponse{
+				ID:          announcement.Team.ID,
+				Name:        announcement.Team.Name,
+				Description: announcement.Team.Description,
+				Headcount:   announcement.Team.Headcount,
+				CreatedBy:   announcement.Team.CreatedBy,
+				Members:     announcement.Team.Members,
+				Vacancies:   vacancies,
+				Skills:      announcement.Team.Skills,
+			},
+		})
+	}
+	return result, nil
 }

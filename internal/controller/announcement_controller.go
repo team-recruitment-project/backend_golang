@@ -5,8 +5,10 @@ import (
 	"backend_golang/internal/models"
 	"backend_golang/internal/service"
 	servicemodels "backend_golang/internal/service/models"
+	"log"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -15,6 +17,7 @@ import (
 type AnnouncementController interface {
 	Announce(c *gin.Context)
 	GetAnnouncement(c *gin.Context)
+	GetAnnouncements(c *gin.Context)
 }
 
 type announcementController struct {
@@ -77,4 +80,41 @@ func (a *announcementController) GetAnnouncement(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, announcement)
+}
+
+func (a *announcementController) GetAnnouncements(c *gin.Context) {
+	page, err := strconv.Atoi(c.Query("page"))
+	log.Println("page", c.Query("page"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	size, err := strconv.Atoi(c.Query("size"))
+	log.Println("size", c.Query("size"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	skillParams := c.Query("skill")
+	var skills []string
+	if skillParams != "" {
+		skills = strings.Split(skillParams, ",")
+	}
+
+	positionParams := c.Query("position")
+	var positions []string
+	if positionParams != "" {
+		positions = strings.Split(positionParams, ",")
+	}
+
+	keyword := c.Query("keyword")
+
+	announcements, err := a.announcementService.GetAnnouncements(c, page, size, skills, positions, keyword)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, announcements)
 }

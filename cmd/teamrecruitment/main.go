@@ -52,6 +52,7 @@ func main() {
 	announcementController := controller.NewAnnouncementController(announcementService)
 	app.POST("/v1/announcements", middleware.Authentication(), announcementController.Announce)
 	app.GET("/v1/announcements/:announcementID", announcementController.GetAnnouncement)
+	app.GET("/v1/announcements", announcementController.GetAnnouncements)
 
 	// Auth
 	authService := service.NewAuthService(authRepository)
